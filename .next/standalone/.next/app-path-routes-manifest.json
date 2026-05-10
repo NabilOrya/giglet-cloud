@@ -1,0 +1,11 @@
+{
+  "/(auth)/login/page": "/login",
+  "/(auth)/signup/page": "/signup",
+  "/(dashboard)/admin/page": "/admin",
+  "/(dashboard)/client/page": "/client",
+  "/(dashboard)/student/page": "/student",
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/api/auth/[...nextauth]/route": "/api/auth/[...nextauth]",
+  "/page": "/"
+}
