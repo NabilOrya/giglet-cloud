@@ -2,7 +2,8 @@
 
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
-import { ApplicationStatus, GigStatus, UserRole } from "@prisma/client"
+import { GigStatus, UserRole } from "@prisma/client"
+import type { ApplicationStatus } from "@prisma/client"
 import { z } from "zod"
 import { signIn, auth } from "@/lib/auth"
 import { AuthError } from "next-auth"
@@ -25,6 +26,12 @@ const GigSchema = z.object({
   description: z.string().min(20, "Description must be at least 20 characters"),
   budget: z.coerce.number().positive("Budget must be a positive number"),
 })
+
+const APPLICATION_STATUS = {
+  PENDING: "PENDING" as ApplicationStatus,
+  ACCEPTED: "ACCEPTED" as ApplicationStatus,
+  REJECTED: "REJECTED" as ApplicationStatus,
+} as const
 
 export async function signup(formData: FormData) {
   const validatedFields = SignupSchema.safeParse(Object.fromEntries(formData.entries()))
@@ -179,7 +186,7 @@ export async function applyForGig(formData: FormData) {
     create: {
       gigId,
       studentId: session.user.id,
-      status: ApplicationStatus.PENDING,
+      status: APPLICATION_STATUS.PENDING,
     },
   })
 
@@ -212,11 +219,11 @@ export async function acceptApplication(formData: FormData) {
   await prisma.$transaction([
     prisma.application.updateMany({
       where: { gigId: application.gigId, id: { not: applicationId } },
-      data: { status: ApplicationStatus.REJECTED },
+      data: { status: APPLICATION_STATUS.REJECTED },
     }),
     prisma.application.update({
       where: { id: applicationId },
-      data: { status: ApplicationStatus.ACCEPTED },
+      data: { status: APPLICATION_STATUS.ACCEPTED },
     }),
     prisma.gig.update({
       where: { id: application.gigId },
@@ -253,7 +260,7 @@ export async function rejectApplication(formData: FormData) {
 
   await prisma.application.update({
     where: { id: applicationId },
-    data: { status: ApplicationStatus.REJECTED },
+    data: { status: APPLICATION_STATUS.REJECTED },
   })
 
   if (typeof gigId === "string" && gigId) {
