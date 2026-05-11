@@ -16,12 +16,14 @@ function SignupForm() {
   const [error, setError] = useState<Record<string, string[]> | string | null>(null)
   const [loading, setLoading] = useState(false)
   const [selectedRole, setSelectedRole] = useState<UserRole>(
-    initialRole === UserRole.CLIENT ? UserRole.CLIENT : UserRole.STUDENT
+    initialRole === "CLIENT" ? UserRole.CLIENT : UserRole.STUDENT
   )
 
   useEffect(() => {
-    if (initialRole === UserRole.CLIENT || initialRole === UserRole.STUDENT) {
-      setSelectedRole(initialRole)
+    if (initialRole === "CLIENT") {
+      setSelectedRole(UserRole.CLIENT)
+    } else if (initialRole === "STUDENT") {
+      setSelectedRole(UserRole.STUDENT)
     }
   }, [initialRole])
 
@@ -31,7 +33,7 @@ function SignupForm() {
     setError(null)
 
     const formData = new FormData(event.currentTarget)
-    formData.set("role", selectedRole)
+    // The role is now explicitly taken from the hidden input which is tied to selectedRole state
     
     const result = await signup(formData)
 

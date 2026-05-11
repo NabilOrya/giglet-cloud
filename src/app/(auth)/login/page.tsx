@@ -31,8 +31,10 @@ function LoginForm() {
       }
       setLoading(false)
     } else {
-      router.push(callbackUrl)
+      // After login, we redirect to the specific dashboard based on role
+      // This is a safety measure to ensure the user goes to the right place
       router.refresh()
+      router.push("/") // Middleware will handle the role-based redirect from home
     }
   }
 
