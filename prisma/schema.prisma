@@ -34,6 +34,7 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   gigs          Gig[]     @relation("ClientGigs")
+  applications  Application[]
 
   @@map("users")
 }
@@ -46,8 +47,23 @@ model Gig {
   status      GigStatus @default(OPEN)
   clientId    String
   client      User      @relation("ClientGigs", fields: [clientId], references: [id], onDelete: Cascade)
+  applications Application[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   @@map("gigs")
+}
+
+model Application {
+  id        String   @id @default(uuid())
+  gigId     String
+  gig       Gig      @relation(fields: [gigId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([gigId, userId])
+  @@map("applications")
 }

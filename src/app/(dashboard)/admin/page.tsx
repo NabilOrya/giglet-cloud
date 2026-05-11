@@ -1,5 +1,6 @@
-import { Users, Briefcase, AlertCircle, ShieldCheck, Activity, BarChart } from "lucide-react"
+import { Users, Briefcase, AlertCircle, ShieldCheck, Activity, BarChart, ArrowRight } from "lucide-react"
 import { prisma } from "@/lib/prisma"
+import Link from "next/link"
 
 export const dynamic = "force-dynamic"
 
@@ -10,6 +11,39 @@ export default async function AdminDashboard() {
   
   console.log(`[ADMIN AUDIT] Time: ${new Date().toISOString()} | Users: ${userCount} | Gigs: ${gigCount}`)
 
+  const stats = [
+    { 
+      title: "Total Users", 
+      value: userCount.toString(), 
+      icon: Users, 
+      color: "text-blue-500", 
+      bg: "bg-blue-500/10",
+      href: "/admin/users" 
+    },
+    { 
+      title: "Total Gigs", 
+      value: gigCount.toString(), 
+      icon: Briefcase, 
+      color: "text-purple-500", 
+      bg: "bg-purple-500/10",
+      href: "/admin/gigs" 
+    },
+    { 
+      title: "Active Reports", 
+      value: "0", 
+      icon: AlertCircle, 
+      color: "text-red-500", 
+      bg: "bg-red-500/10" 
+    },
+    { 
+      title: "System Health", 
+      value: "99.9%", 
+      icon: Activity, 
+      color: "text-green-500", 
+      bg: "bg-green-500/10" 
+    },
+  ]
+
   return (
     <div className="space-y-10">
       <div>
@@ -18,24 +52,36 @@ export default async function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          { title: "Total Users", value: userCount.toString(), icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
-          { title: "Total Gigs", value: gigCount.toString(), icon: Briefcase, color: "text-purple-500", bg: "bg-purple-500/10" },
-          { title: "Active Reports", value: "0", icon: AlertCircle, color: "text-red-500", bg: "bg-red-500/10" },
-          { title: "System Health", value: "99.9%", icon: Activity, color: "text-green-500", bg: "bg-green-500/10" },
-        ].map((stat) => (
-          <div key={stat.title} className="card-gradient p-6 rounded-3xl">
-            <div className={`${stat.bg} ${stat.color} h-10 w-10 rounded-xl flex items-center justify-center mb-4`}>
-              <stat.icon className="h-5 w-5" />
+        {stats.map((stat) => {
+          const CardContent = (
+            <div className="card-gradient p-6 rounded-3xl h-full border border-border/50 hover:border-primary/30 transition-all group relative overflow-hidden">
+              <div className={`${stat.bg} ${stat.color} h-10 w-10 rounded-xl flex items-center justify-center mb-4`}>
+                <stat.icon className="h-5 w-5" />
+              </div>
+              <h3 className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-1">{stat.title}</h3>
+              <p className="text-2xl font-bold">{stat.value}</p>
+              {stat.href && (
+                <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ArrowRight className="h-4 w-4 text-primary" />
+                </div>
+              )}
             </div>
-            <h3 className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-1">{stat.title}</h3>
-            <p className="text-2xl font-bold">{stat.value}</p>
-          </div>
-        ))}
+          )
+
+          return stat.href ? (
+            <Link key={stat.title} href={stat.href}>
+              {CardContent}
+            </Link>
+          ) : (
+            <div key={stat.title}>
+              {CardContent}
+            </div>
+          )
+        })}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="card-gradient p-8 rounded-3xl">
+        <div className="card-gradient p-8 rounded-3xl border border-border/50">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold">Platform Activity</h3>
             <BarChart className="h-5 w-5 text-muted-foreground" />
@@ -45,7 +91,7 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        <div className="card-gradient p-8 rounded-3xl border-green-500/20 bg-green-500/5">
+        <div className="card-gradient p-8 rounded-3xl border border-green-500/20 bg-green-500/5">
           <div className="flex items-center gap-4 mb-6">
             <div className="h-12 w-12 bg-green-500/10 text-green-500 rounded-2xl flex items-center justify-center">
               <ShieldCheck className="h-6 w-6" />
