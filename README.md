@@ -40,7 +40,7 @@ The initial phase focused on building a secure, scalable foundation.
 - **Role-Based Access Control (RBAC)**:
   - Strict middleware-level route protection.
   - Automatic redirection based on user role (`STUDENT`, `CLIENT`, `ADMIN`).
-  - Secure isolation between `/dashboard/student`, `/dashboard/client`, and `/dashboard/admin`.
+  - Secure isolation between `/student`, `/client`, and `/admin`.
 - **Database Integration**:
   - Prisma ORM with UUID-based User models.
   - Singleton pattern for Prisma Client to prevent connection exhaustion.
@@ -59,16 +59,36 @@ The initial phase focused on building a secure, scalable foundation.
 1. Clone the repository.
 2. Install dependencies: `pnpm install`.
 3. Set up `.env` file (see `.env.example`).
-4. Generate Prisma client: `pnpm prisma generate`.
+4. Generate Prisma client: `pnpm exec prisma generate`.
 5. Run development server: `pnpm dev`.
 
 ## 🚢 Production Sync Workflow
 After making changes locally:
-1. **Push to GitHub**: `git push origin main`
-2. **Pull on EC2**: `git pull origin main`
-3. **Build**: `pnpm build`
-4. **Sync Assets**: Copy `.next/static` and `public` to `.next/standalone`.
-5. **Restart**: `pm2 restart giglet`
+1. **Push to GitHub**: `git push origin main`.
+2. **Pull on EC2**: `git pull origin main`.
+3. **Prisma**:
+   - `pnpm exec prisma generate`
+   - `pnpm exec prisma db push`
+4. **Build**: `rm -rf .next && pnpm build`.
+5. **Sync Assets (Standalone)**:
+   - `cp -r .next/static .next/standalone/.next/`
+   - `cp -r public .next/standalone/`
+6. **Restart**: `pm2 restart giglet --update-env`.
 
 ---
-*Status: Phase 1 Stable | Ready for Phase 2: Marketplace Logic*
+## ✅ Phase 2A/2B: Gigs + Dashboards (Current)
+- **Gig Marketplace**:
+  - Browse gigs: `/gigs`
+  - Create a gig (client only): `/gigs/new`
+  - Gig details: `/gigs/[id]`
+- **Dashboards (Route Group: `src/app/(dashboard)`; URLs do not include `(dashboard)`)**:
+  - Student dashboard: `/student` (shows latest OPEN gigs)
+  - Client dashboard: `/client` (shows gigs posted by the logged-in client + applicant count per gig)
+  - Admin dashboard: `/admin` (live counts + drill-down)
+  - Admin users: `/admin/users`
+  - Admin gigs: `/admin/gigs`
+- **Applications model**:
+  - Prisma includes an `Application` model and a `applications` table in Postgres to support per-gig applicant counts.
+
+---
+*Status: Phase 2B Dashboards + Admin Drill-down Stable*

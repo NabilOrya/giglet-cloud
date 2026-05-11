@@ -132,10 +132,13 @@ export default async function ClientDashboard() {
                     <Eye className="h-4 w-4" />
                     Open Gig
                   </Link>
-                  <button className="p-3 rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center gap-2 text-sm font-bold shadow-lg shadow-primary/20">
+                  <Link
+                    href={`/client/gigs/${gig.id}/applications`}
+                    className="p-3 rounded-xl bg-primary text-primary-foreground hover:opacity-90 transition-all flex items-center gap-2 text-sm font-bold shadow-lg shadow-primary/20"
+                  >
                     <Users className="h-4 w-4" />
                     View Applicants
-                  </button>
+                  </Link>
                   <button className="p-3 rounded-xl hover:bg-muted transition-all">
                     <MoreVertical className="h-4 w-4 text-muted-foreground" />
                   </button>

@@ -1,14 +1,34 @@
-import { LayoutDashboard, Wallet, Zap, TrendingUp, Clock, ArrowRight } from "lucide-react"
+import { Wallet, Zap, TrendingUp, Clock, ArrowRight } from "lucide-react"
 import { prisma } from "@/lib/prisma"
 import Link from "next/link"
+import { auth } from "@/lib/auth"
+import { redirect } from "next/navigation"
 
 export const dynamic = "force-dynamic"
 
 export default async function StudentDashboard() {
+  const session = await auth()
+
+  if (!session?.user?.id) {
+    redirect("/login")
+  }
+
+  if (session.user.role !== "STUDENT") {
+    if (session.user.role === "ADMIN") redirect("/admin")
+    if (session.user.role === "CLIENT") redirect("/client")
+    redirect("/")
+  }
+
   // Fetch real-time stats from RDS
   const totalOpenGigs = await prisma.gig.count({
     where: { status: "OPEN" }
   })
+
+  const [totalApplications, pendingApplications, acceptedApplications] = await Promise.all([
+    prisma.application.count({ where: { studentId: session.user.id } }),
+    prisma.application.count({ where: { studentId: session.user.id, status: "PENDING" } }),
+    prisma.application.count({ where: { studentId: session.user.id, status: "ACCEPTED" } }),
+  ])
 
   const latestGigs = await prisma.gig.findMany({
     where: { status: "OPEN" },
@@ -36,9 +56,9 @@ export default async function StudentDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { title: "Available Gigs", value: totalOpenGigs.toString(), icon: Zap, color: "text-blue-500", bg: "bg-blue-500/10" },
-          { title: "My Applications", value: "0", icon: Clock, color: "text-purple-500", bg: "bg-purple-500/10" },
-          { title: "Total Earnings", value: "$0.00", icon: Wallet, color: "text-green-500", bg: "bg-green-500/10" },
-          { title: "Success Rate", value: "0%", icon: TrendingUp, color: "text-orange-500", bg: "bg-orange-500/10" },
+          { title: "My Applications", value: totalApplications.toString(), icon: Clock, color: "text-purple-500", bg: "bg-purple-500/10" },
+          { title: "Pending", value: pendingApplications.toString(), icon: Wallet, color: "text-green-500", bg: "bg-green-500/10" },
+          { title: "Accepted", value: acceptedApplications.toString(), icon: TrendingUp, color: "text-orange-500", bg: "bg-orange-500/10" },
         ].map((stat) => (
           <div key={stat.title} className="card-gradient p-6 rounded-3xl border border-border/50">
             <div className={`${stat.bg} ${stat.color} h-10 w-10 rounded-xl flex items-center justify-center mb-4`}>

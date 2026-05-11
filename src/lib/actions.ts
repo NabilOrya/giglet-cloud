@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
-import { UserRole } from "@prisma/client"
+import { ApplicationStatus, GigStatus, UserRole } from "@prisma/client"
 import { z } from "zod"
 import { signIn, auth } from "@/lib/auth"
 import { AuthError } from "next-auth"
@@ -144,5 +144,121 @@ export async function createGig(formData: FormData) {
     return { error: { message: "Failed to create gig" } }
   }
 
-  redirect("/dashboard/client")
+  redirect("/client")
+}
+
+export async function applyForGig(formData: FormData) {
+  const session = await auth()
+  const gigId = formData.get("gigId")
+
+  if (typeof gigId !== "string" || !gigId) {
+    redirect("/gigs")
+  }
+
+  if (!session?.user?.id) {
+    const callbackUrl = encodeURIComponent(`/gigs/${gigId}`)
+    redirect(`/login?callbackUrl=${callbackUrl}`)
+  }
+
+  if (session.user.role !== UserRole.STUDENT) {
+    redirect(`/gigs/${gigId}`)
+  }
+
+  const gig = await prisma.gig.findUnique({
+    where: { id: gigId },
+    select: { id: true, status: true },
+  })
+
+  if (!gig || gig.status !== GigStatus.OPEN) {
+    redirect(`/gigs/${gigId}`)
+  }
+
+  await prisma.application.upsert({
+    where: { gigId_studentId: { gigId, studentId: session.user.id } },
+    update: {},
+    create: {
+      gigId,
+      studentId: session.user.id,
+      status: ApplicationStatus.PENDING,
+    },
+  })
+
+  redirect(`/gigs/${gigId}?applied=1`)
+}
+
+export async function acceptApplication(formData: FormData) {
+  const session = await auth()
+  const applicationId = formData.get("applicationId")
+
+  if (typeof applicationId !== "string" || !applicationId) {
+    redirect("/client")
+  }
+
+  if (!session?.user?.id || session.user.role !== UserRole.CLIENT) {
+    redirect("/login")
+  }
+
+  const application = await prisma.application.findUnique({
+    where: { id: applicationId },
+    include: {
+      gig: { select: { id: true, clientId: true } },
+    },
+  })
+
+  if (!application || application.gig.clientId !== session.user.id) {
+    redirect("/client")
+  }
+
+  await prisma.$transaction([
+    prisma.application.updateMany({
+      where: { gigId: application.gigId, id: { not: applicationId } },
+      data: { status: ApplicationStatus.REJECTED },
+    }),
+    prisma.application.update({
+      where: { id: applicationId },
+      data: { status: ApplicationStatus.ACCEPTED },
+    }),
+    prisma.gig.update({
+      where: { id: application.gigId },
+      data: { status: GigStatus.IN_PROGRESS },
+    }),
+  ])
+
+  redirect(`/client/gigs/${application.gigId}/applications`)
+}
+
+export async function rejectApplication(formData: FormData) {
+  const session = await auth()
+  const applicationId = formData.get("applicationId")
+  const gigId = formData.get("gigId")
+
+  if (typeof applicationId !== "string" || !applicationId) {
+    redirect("/client")
+  }
+
+  if (!session?.user?.id || session.user.role !== UserRole.CLIENT) {
+    redirect("/login")
+  }
+
+  const application = await prisma.application.findUnique({
+    where: { id: applicationId },
+    include: {
+      gig: { select: { id: true, clientId: true } },
+    },
+  })
+
+  if (!application || application.gig.clientId !== session.user.id) {
+    redirect("/client")
+  }
+
+  await prisma.application.update({
+    where: { id: applicationId },
+    data: { status: ApplicationStatus.REJECTED },
+  })
+
+  if (typeof gigId === "string" && gigId) {
+    redirect(`/client/gigs/${gigId}/applications`)
+  }
+
+  redirect(`/client/gigs/${application.gigId}/applications`)
 }

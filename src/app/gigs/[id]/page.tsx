@@ -4,16 +4,34 @@ import { Navbar } from "@/components/landing/navbar"
 import { Footer } from "@/components/landing/footer"
 import { Calendar, DollarSign, User, ArrowLeft, ShieldCheck, Briefcase } from "lucide-react"
 import Link from "next/link"
+import { auth } from "@/lib/auth"
+import { applyForGig } from "@/lib/actions"
 
 export const dynamic = "force-dynamic"
 
-export default async function GigDetailPage({ params }: { params: { id: string } }) {
+export default async function GigDetailPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string }
+  searchParams?: { applied?: string }
+}) {
+  const session = await auth()
+
   const gig = await prisma.gig.findUnique({
     where: { id: params.id },
     include: { client: { select: { name: true, email: true } } }
   })
 
   if (!gig) notFound()
+
+  const studentApplication =
+    session?.user?.role === "STUDENT"
+      ? await prisma.application.findUnique({
+          where: { gigId_studentId: { gigId: gig.id, studentId: session.user.id } },
+          select: { status: true },
+        })
+      : null
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -88,13 +106,55 @@ export default async function GigDetailPage({ params }: { params: { id: string }
                   </div>
                 </div>
 
-                <button className="btn-primary w-full py-4 text-lg font-bold shadow-xl shadow-primary/20 flex items-center justify-center gap-2">
-                  <Briefcase className="h-5 w-5" />
-                  Apply for this Gig
-                </button>
-                <p className="text-[10px] text-center text-muted-foreground mt-4 font-medium uppercase tracking-tighter">
-                  Applications are currently in beta
-                </p>
+                {session?.user?.role === "STUDENT" ? (
+                  studentApplication ? (
+                    <button
+                      disabled
+                      className="w-full py-4 text-lg font-bold shadow-xl flex items-center justify-center gap-2 rounded-2xl bg-muted text-muted-foreground cursor-not-allowed"
+                    >
+                      <Briefcase className="h-5 w-5" />
+                      Applied ({studentApplication.status})
+                    </button>
+                  ) : gig.status !== "OPEN" ? (
+                    <button
+                      disabled
+                      className="w-full py-4 text-lg font-bold shadow-xl flex items-center justify-center gap-2 rounded-2xl bg-muted text-muted-foreground cursor-not-allowed"
+                    >
+                      <Briefcase className="h-5 w-5" />
+                      Applications Closed
+                    </button>
+                  ) : (
+                    <form action={applyForGig}>
+                      <input type="hidden" name="gigId" value={gig.id} />
+                      <button className="btn-primary w-full py-4 text-lg font-bold shadow-xl shadow-primary/20 flex items-center justify-center gap-2">
+                        <Briefcase className="h-5 w-5" />
+                        Apply for this Gig
+                      </button>
+                    </form>
+                  )
+                ) : session?.user?.id ? (
+                  <button
+                    disabled
+                    className="w-full py-4 text-lg font-bold shadow-xl flex items-center justify-center gap-2 rounded-2xl bg-muted text-muted-foreground cursor-not-allowed"
+                  >
+                    <Briefcase className="h-5 w-5" />
+                    Students Only
+                  </button>
+                ) : (
+                  <Link
+                    href={`/login?callbackUrl=${encodeURIComponent(`/gigs/${gig.id}`)}`}
+                    className="btn-primary w-full py-4 text-lg font-bold shadow-xl shadow-primary/20 flex items-center justify-center gap-2"
+                  >
+                    <Briefcase className="h-5 w-5" />
+                    Sign in to Apply
+                  </Link>
+                )}
+
+                {searchParams?.applied === "1" && (
+                  <p className="text-[10px] text-center text-green-600 dark:text-green-400 mt-4 font-bold uppercase tracking-tighter">
+                    Application submitted
+                  </p>
+                )}
               </div>
             </div>
           </div>

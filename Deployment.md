@@ -1,63 +1,67 @@
 # Giglet Deployment Guide — AWS EC2 (Standalone Mode)
 
-This document provides instructions for deploying the Giglet Phase 1 application to an AWS EC2 instance (Private Subnet) behind an Application Load Balancer (ALB).
+This document covers deploying Giglet (App Router) to an AWS EC2 instance (private subnet) behind an Application Load Balancer (ALB), using Next.js `output: "standalone"`.
 
 ## Prerequisites
-- EC2 Instance (Ubuntu/Linux) in Private Subnet.
-- RDS PostgreSQL instance accessible from EC2.
-- ALB configured with a Target Group pointing to EC2 on Port 3000.
-- Node.js 20+ (LTS) installed on EC2.
-- PM2 installed on EC2 (`npm install -g pm2`).
+- EC2 Instance (Ubuntu/Linux) in Private Subnet
+- RDS PostgreSQL instance accessible from EC2
+- ALB Target Group pointing to EC2 on port `3000`
+- Node.js 20+ installed on EC2
+- PM2 installed (`npm install -g pm2`)
+- Repository is clean:
+  - `.next/` is ignored and not tracked
+  - `tsconfig.tsbuildinfo` is ignored and not tracked
 
-## Step 1: Prepare the Production Bundle
-On your local machine, run:
-```bash
-pnpm build
-```
-This generates the standalone bundle in `.next/standalone`.
-
-## Step 2: Transfer Files to EC2
-Transfer the following files/directories to your EC2 instance (e.g., using SCP or SFTP):
-- `.next/standalone/` (All contents)
-- `.next/static/` (Transfer to `.next/standalone/.next/static`)
-- `public/` (Transfer to `.next/standalone/public`)
-- `prisma/` (Required for database migrations)
-
-## Step 3: Environment Configuration
-On the EC2 instance, create a `.env` file inside the application directory:
+## Environment Configuration (`.env` on EC2)
+Create a `.env` file in the repo root on EC2:
 
 ```env
-# Database (RDS)
 DATABASE_URL="postgresql://<username>:<password>@<rds-endpoint>:5432/<db-name>?schema=public"
-
-# Auth.js (Production)
-AUTH_SECRET="<your-generate-secret>"
-AUTH_URL="https://<your-alb-domain-or-ip>" # Must match the ALB entry point
-
-# AWS Specific
-TRUST_HOST=true
+AUTH_SECRET="<32+ char secret>"
+AUTH_URL="http://<your-alb-dns-name>"
+NODE_ENV="production"
 ```
 
-## Step 4: Install Production Dependencies
-Navigate to the app directory on EC2 and run:
+Important:
+- `AUTH_URL` must match the ALB URL exactly (no backticks, no extra spaces).
+
+## Recommended Deployment Flow (Build on EC2)
+From inside the repo directory on EC2:
+
 ```bash
-# Since it's standalone, most dependencies are bundled.
-# We only need to ensure the Prisma client is generated if not transferred.
-npx prisma generate
+git pull origin main
+
+pnpm install
+pnpm exec prisma generate
+
+# Sync schema to RDS (repo uses db push; no migrations folder)
+pnpm exec prisma db push
+
+rm -rf .next
+pnpm build
+
+# Standalone asset sync (required for Next.js standalone output)
+cp -r .next/static .next/standalone/.next/
+cp -r public .next/standalone/
 ```
 
-## Step 5: Start the Application with PM2
-Start the server using PM2 to ensure it stays alive:
+### Start / Restart with PM2
 ```bash
-pm2 start server.js --name "giglet-app" --env PORT=3000
+pm2 start .next/standalone/server.js --name giglet --update-env --time --interpreter node --env production
+pm2 save
 ```
 
-## Step 6: ALB & Security Group Verification
-- **ALB Security Group**: Allow 80/443 from 0.0.0.0/0.
-- **EC2 Security Group**: Allow Port 3000 ONLY from the ALB Security Group.
-- **RDS Security Group**: Allow Port 5432 ONLY from the EC2 Security Group.
+If already running:
+```bash
+pm2 restart giglet --update-env
+```
+
+## ALB & Security Group Verification
+- ALB SG: allow 80/443 from 0.0.0.0/0
+- EC2 SG: allow 3000 ONLY from the ALB SG
+- RDS SG: allow 5432 ONLY from the EC2 SG
 
 ## Troubleshooting
-- **502 Bad Gateway**: Check if the app is running (`pm2 list`) and listening on Port 3000.
-- **Auth Redirects**: Ensure `AUTH_URL` is set to the ALB's domain and `trustHost: true` is in your Auth.js config.
-- **Database Connection**: Verify EC2 can reach RDS (`telnet <rds-endpoint> 5432`).
+- 502 from ALB: `pm2 list` and `pm2 logs giglet`
+- Auth redirect issues: verify `AUTH_URL` and that the app trusts the proxy (`trustHost: true` in Auth)
+- DB errors: ensure `pnpm exec prisma db push` succeeded and RDS is reachable from EC2

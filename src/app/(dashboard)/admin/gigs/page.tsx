@@ -9,7 +9,10 @@ export default async function AdminGigsPage() {
     include: {
       client: {
         select: { name: true }
-      }
+      },
+      _count: {
+        select: { applications: true }
+      },
     },
     orderBy: { createdAt: "desc" },
   })
@@ -37,6 +40,7 @@ export default async function AdminGigsPage() {
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Client</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Budget</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Status</th>
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Applications</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Created</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground text-right">Actions</th>
               </tr>
@@ -80,6 +84,11 @@ export default async function AdminGigsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
+                      <span className="text-sm font-bold text-foreground">
+                        {gig._count.applications}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <Calendar className="h-3.5 w-3.5" />
                         {new Date(gig.createdAt).toLocaleDateString()}
@@ -98,7 +107,7 @@ export default async function AdminGigsPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
+                  <td colSpan={7} className="px-6 py-12 text-center">
                     <div className="max-w-xs mx-auto space-y-3">
                       <div className="h-12 w-12 bg-muted rounded-full flex items-center justify-center mx-auto text-muted-foreground">
                         <Briefcase className="h-6 w-6" />
