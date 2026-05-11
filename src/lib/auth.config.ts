@@ -3,13 +3,16 @@ import Credentials from "next-auth/providers/credentials"
 import { UserRole } from "@prisma/client"
 
 export const authConfig = {
+  trustHost: true,
   pages: {
     signIn: "/login",
   },
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user
-      const isDashboard = nextUrl.pathname.startsWith("/dashboard")
+      const isDashboard = ["/admin", "/client", "/student"].some((p) =>
+        nextUrl.pathname.startsWith(p)
+      )
       
       if (isDashboard) {
         if (isLoggedIn) return true
