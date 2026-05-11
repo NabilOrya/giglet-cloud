@@ -8,6 +8,7 @@ import { auth } from "@/lib/auth"
 import { applyForGig } from "@/lib/actions"
 
 export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
 
 export default async function GigDetailPage({
   params,
@@ -19,14 +20,21 @@ export default async function GigDetailPage({
   const session = await auth()
 
   const gigId = params.id ?? params.gigId
-  if (!gigId) notFound()
+  if (!gigId) {
+    console.log("[GIG DETAIL] Missing gig id param", params)
+    notFound()
+  }
 
   const gig = await prisma.gig.findFirst({
     where: { id: gigId },
     include: { client: { select: { name: true, email: true } } }
   })
 
-  if (!gig) notFound()
+  if (!gig) {
+    const exists = await prisma.gig.count({ where: { id: gigId } })
+    console.log("[GIG DETAIL] Gig not found", { gigId, exists })
+    notFound()
+  }
 
   const studentApplication =
     session?.user?.role === "STUDENT"

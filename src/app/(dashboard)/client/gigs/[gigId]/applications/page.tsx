@@ -6,6 +6,7 @@ import { acceptApplication, rejectApplication } from "@/lib/actions"
 import { ArrowLeft, Briefcase, Calendar, User as UserIcon, Mail, CheckCircle2, XCircle } from "lucide-react"
 
 export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
 
 export default async function ClientGigApplicationsPage({
   params,
