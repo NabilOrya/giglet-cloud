@@ -4,11 +4,11 @@ import { prisma } from "@/lib/prisma"
 export const dynamic = "force-dynamic"
 
 export default async function AdminDashboard() {
+  // Audit Check: Fetching real-time stats from RDS
   const userCount = await prisma.user.count()
   const gigCount = await prisma.gig.count()
   
-  console.log("AdminDashboard - User Count:", userCount)
-  console.log("AdminDashboard - Gig Count:", gigCount)
+  console.log(`[ADMIN AUDIT] Time: ${new Date().toISOString()} | Users: ${userCount} | Gigs: ${gigCount}`)
 
   return (
     <div className="space-y-10">
