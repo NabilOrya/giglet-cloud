@@ -13,21 +13,50 @@ export default async function ClientDashboard() {
     redirect("/login")
   }
 
-  // Fetch real-time stats from RDS
+  if (session.user.role !== "CLIENT") {
+    if (session.user.role === "ADMIN") redirect("/admin")
+    if (session.user.role === "STUDENT") redirect("/student")
+    redirect("/")
+  }
+
   const totalGigsPosted = await prisma.gig.count({
-    where: { clientId: session.user.id }
+    where: { clientId: session.user.id },
   })
 
-  const recentGigs = await prisma.gig.findMany({
-    where: { clientId: session.user.id },
-    orderBy: { createdAt: "desc" },
-    take: 5,
-    include: {
-      _count: {
-        select: { applications: true }
-      }
-    }
-  })
+  const [{ exists: hasApplicationsTable } = { exists: false }] = await prisma.$queryRaw<
+    Array<{ exists: boolean }>
+  >`SELECT to_regclass('public.applications') IS NOT NULL AS "exists"`
+
+  const recentGigs = (hasApplicationsTable
+    ? await prisma.gig.findMany({
+        where: { clientId: session.user.id },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        include: {
+          _count: {
+            select: { applications: true },
+          },
+        },
+      })
+    : await prisma.gig.findMany({
+        where: { clientId: session.user.id },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        select: {
+          id: true,
+          title: true,
+          budget: true,
+          status: true,
+          createdAt: true,
+        },
+      })) as Array<{
+    id: string
+    title: string
+    budget: number
+    status: string
+    createdAt: Date
+    _count?: { applications: number }
+  }>
 
   return (
     <div className="space-y-10">
@@ -90,7 +119,7 @@ export default async function ClientDashboard() {
                     <span>•</span>
                     <span className="flex items-center gap-1">
                       <Users className="h-3 w-3" />
-                      {gig._count.applications} Applicants
+                      {gig._count?.applications ?? 0} Applicants
                     </span>
                   </div>
                 </div>
