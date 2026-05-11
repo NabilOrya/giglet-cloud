@@ -2,20 +2,76 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@import "tailwindcss";
+
+@theme {
+  --background: #fcfcfd;
+  --foreground: #09090b;
+  --card: #ffffff;
+  --card-foreground: #09090b;
+  --popover: #ffffff;
+  --popover-foreground: #09090b;
+  --primary: #2563eb;
+  --primary-foreground: #f8fafc;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+  --destructive: #ef4444;
+  --destructive-foreground: #f8fafc;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #2563eb;
+  --radius: 0.75rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+.dark {
+  --background: #09090b;
+  --foreground: #f8fafc;
+  --card: #09090b;
+  --card-foreground: #f8fafc;
+  --popover: #09090b;
+  --popover-foreground: #f8fafc;
+  --primary: #3b82f6;
+  --primary-foreground: #0f172a;
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e293b;
+  --accent-foreground: #f8fafc;
+  --destructive: #7f1d1d;
+  --destructive-foreground: #f8fafc;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #3b82f6;
+}
+
+@layer base {
+  * {
+    @apply border-[var(--border)];
+  }
+  body {
+    @apply bg-[var(--background)] text-[var(--foreground)] antialiased;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .glass {
+    @apply bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-[var(--border)];
+  }
+  
+  .card-gradient {
+    @apply bg-white dark:bg-zinc-900 border border-[var(--border)] shadow-sm hover:shadow-md transition-all duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-[var(--primary)] text-[var(--primary-foreground)] px-5 py-2.5 rounded-[var(--radius)] font-medium hover:opacity-90 transition-all shadow-sm active:scale-[0.98];
+  }
+
+  .btn-secondary {
+    @apply bg-[var(--secondary)] text-[var(--secondary-foreground)] px-5 py-2.5 rounded-[var(--radius)] font-medium hover:brightness-95 transition-all border border-[var(--border)];
+  }
 }

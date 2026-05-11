@@ -24,30 +24,6 @@
       "filename": "src/lib/actions.ts",
       "exportedName": "signup"
     },
-    "00b5a666f695b533582023bdbceb1b194dff4d26f1": {
-      "workers": {
-        "app/(dashboard)/admin/page": {
-          "moduleId": 74326,
-          "async": false,
-          "exportedName": "$$RSC_SERVER_ACTION_0",
-          "filename": "src/app/(dashboard)/layout.tsx"
-        },
-        "app/(dashboard)/client/page": {
-          "moduleId": 41439,
-          "async": false,
-          "exportedName": "$$RSC_SERVER_ACTION_0",
-          "filename": "src/app/(dashboard)/layout.tsx"
-        },
-        "app/(dashboard)/student/page": {
-          "moduleId": 84671,
-          "async": false,
-          "exportedName": "$$RSC_SERVER_ACTION_0",
-          "filename": "src/app/(dashboard)/layout.tsx"
-        }
-      },
-      "filename": "src/app/(dashboard)/layout.tsx",
-      "exportedName": "$$RSC_SERVER_ACTION_0"
-    },
     "408eeabcda56fc6c8432e53e0faf4a06ce9cfc2a01": {
       "workers": {
         "app/gigs/new/page": {

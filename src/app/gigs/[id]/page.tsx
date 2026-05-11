@@ -2,7 +2,8 @@ import { prisma } from "@/lib/prisma"
 import { notFound } from "next/navigation"
 import { Navbar } from "@/components/landing/navbar"
 import { Footer } from "@/components/landing/footer"
-import { Calendar, DollarSign, User } from "lucide-react"
+import { Calendar, DollarSign, User, ArrowLeft, ShieldCheck, Briefcase } from "lucide-react"
+import Link from "next/link"
 
 export const dynamic = "force-dynamic"
 
@@ -17,56 +18,83 @@ export default async function GigDetailPage({ params }: { params: { id: string }
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      <main className="flex-grow pt-24 pb-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-xl overflow-hidden">
-            <div className="p-8 md:p-12">
-              <div className="flex flex-wrap items-center gap-3 mb-6">
-                <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-full text-xs font-bold uppercase tracking-wider">
-                  {gig.status}
-                </span>
-                <span className="flex items-center text-sm text-gray-500">
-                  <Calendar className="h-4 w-4 mr-1" />
-                  {new Date(gig.createdAt).toLocaleDateString()}
-                </span>
-              </div>
+      <main className="flex-grow pt-32 pb-24">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Link 
+            href="/gigs" 
+            className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary mb-8 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Marketplace
+          </Link>
 
-              <h1 className="text-3xl md:text-4xl font-bold mb-6 text-gray-900 dark:text-white">
-                {gig.title}
-              </h1>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column: Gig Details */}
+            <div className="lg:col-span-2 space-y-8">
+              <div className="card-gradient p-8 md:p-12 rounded-[2rem]">
+                <div className="flex flex-wrap items-center gap-3 mb-8">
+                  <span className="px-3 py-1 bg-primary/10 text-primary rounded-lg text-[10px] font-bold uppercase tracking-wider">
+                    {gig.status}
+                  </span>
+                  <span className="flex items-center text-sm text-muted-foreground font-medium">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Posted on {new Date(gig.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
 
-              <div className="flex flex-col md:flex-row gap-8 mb-10">
-                <div className="flex-grow">
-                  <h2 className="text-lg font-bold mb-3">Description</h2>
-                  <p className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap leading-relaxed">
+                <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-8">
+                  {gig.title}
+                </h1>
+
+                <div className="prose dark:prose-invert max-w-none">
+                  <h3 className="text-xl font-bold mb-4">Project Description</h3>
+                  <p className="text-muted-foreground text-lg leading-relaxed whitespace-pre-wrap">
                     {gig.description}
                   </p>
                 </div>
+              </div>
+            </div>
 
-                <div className="w-full md:w-64 shrink-0">
-                  <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-2xl p-6 border border-gray-100 dark:border-gray-700">
-                    <div className="mb-6">
-                      <p className="text-sm text-gray-500 mb-1">Budget</p>
-                      <p className="text-2xl font-extrabold text-blue-600 flex items-center">
-                        <DollarSign className="h-6 w-6" />
-                        {gig.budget}
-                      </p>
+            {/* Right Column: Actions & Client Info */}
+            <div className="space-y-6">
+              <div className="card-gradient p-8 rounded-[2rem] sticky top-32">
+                <div className="mb-8">
+                  <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-2">Project Budget</p>
+                  <p className="text-4xl font-black text-primary flex items-center">
+                    <DollarSign className="h-8 w-8 -ml-1" />
+                    {gig.budget}
+                  </p>
+                </div>
+
+                <div className="space-y-4 mb-8">
+                  <div className="flex items-center p-4 bg-muted/50 rounded-2xl border border-border">
+                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mr-4">
+                      <User className="h-6 w-6 text-primary" />
                     </div>
-
-                    <div className="mb-6">
-                      <p className="text-sm text-gray-500 mb-1">Posted By</p>
-                      <p className="font-bold flex items-center text-gray-900 dark:text-white">
-                        <User className="h-4 w-4 mr-2" />
-                        {gig.client.name}
-                      </p>
+                    <div>
+                      <p className="text-xs font-bold text-muted-foreground uppercase">Client</p>
+                      <p className="font-extrabold">{gig.client.name}</p>
                     </div>
-
-                    <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-500/20">
-                      Apply Now
-                    </button>
-                    <p className="text-[10px] text-center text-gray-400 mt-2">Applications are coming in Phase 2B</p>
+                  </div>
+                  
+                  <div className="flex items-center p-4 bg-muted/50 rounded-2xl border border-border">
+                    <div className="h-12 w-12 rounded-xl bg-green-500/10 flex items-center justify-center mr-4">
+                      <ShieldCheck className="h-6 w-6 text-green-500" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-muted-foreground uppercase">Status</p>
+                      <p className="font-extrabold text-green-500 text-sm">Verified Client</p>
+                    </div>
                   </div>
                 </div>
+
+                <button className="btn-primary w-full py-4 text-lg font-bold shadow-xl shadow-primary/20 flex items-center justify-center gap-2">
+                  <Briefcase className="h-5 w-5" />
+                  Apply for this Gig
+                </button>
+                <p className="text-[10px] text-center text-muted-foreground mt-4 font-medium uppercase tracking-tighter">
+                  Applications are currently in beta
+                </p>
               </div>
             </div>
           </div>
