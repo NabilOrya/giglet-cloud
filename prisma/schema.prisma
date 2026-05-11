@@ -16,6 +16,13 @@ enum UserRole {
   ADMIN
 }
 
+enum GigStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
 model User {
   id            String    @id @default(uuid())
   name          String?
@@ -26,6 +33,21 @@ model User {
   image         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  gigs          Gig[]     @relation("ClientGigs")
 
   @@map("users")
+}
+
+model Gig {
+  id          String    @id @default(uuid())
+  title       String
+  description String
+  budget      Float
+  status      GigStatus @default(OPEN)
+  clientId    String
+  client      User      @relation("ClientGigs", fields: [clientId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("gigs")
 }
