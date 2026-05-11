@@ -72,7 +72,8 @@ export async function login(formData: FormData) {
   const { email, password } = validatedFields.data
 
   try {
-    await signIn("credentials", {
+    console.log("Actions: Attempting login for", email)
+    const result = await signIn("credentials", {
       email,
       password,
       redirect: false,
@@ -84,7 +85,10 @@ export async function login(formData: FormData) {
       select: { role: true }
     })
 
-    if (!user) return { error: { message: "User not found" } }
+    if (!user) {
+      console.error("Actions: User not found after successful signIn for", email)
+      return { error: { message: "Account configuration error" } }
+    }
 
     const dashboardMap = {
       STUDENT: "/dashboard/student",
@@ -92,16 +96,19 @@ export async function login(formData: FormData) {
       ADMIN: "/dashboard/admin",
     }
 
+    console.log("Actions: Redirecting", email, "to", dashboardMap[user.role])
     return { success: true, redirectTo: dashboardMap[user.role] }
   } catch (error) {
     if (error instanceof AuthError) {
+      console.log("Actions: AuthError during login for", email, "-", error.type)
       switch (error.type) {
         case "CredentialsSignin":
-          return { error: { message: "Invalid credentials" } }
+          return { error: { message: "Invalid email or password" } }
         default:
-          return { error: { message: "Something went wrong" } }
+          return { error: { message: "Authentication failed. Please try again." } }
       }
     }
+    console.error("Actions: Unexpected error during login for", email, error)
     throw error
   }
 }

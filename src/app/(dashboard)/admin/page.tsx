@@ -6,6 +6,9 @@ export const dynamic = "force-dynamic"
 export default async function AdminDashboard() {
   const userCount = await prisma.user.count()
   const gigCount = await prisma.gig.count()
+  
+  console.log("AdminDashboard - User Count:", userCount)
+  console.log("AdminDashboard - Gig Count:", gigCount)
 
   return (
     <div className="space-y-10">

@@ -28,26 +28,41 @@ export const {
   providers: [
     Credentials({
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null
+        if (!credentials?.email || !credentials?.password) {
+          console.log("Auth: Missing email or password")
+          return null
+        }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
-        })
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email as string },
+          })
 
-        if (!user || !user.password) return null
+          if (!user || !user.password) {
+            console.log("Auth: User not found or has no password set")
+            return null
+          }
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        )
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password as string,
+            user.password
+          )
 
-        if (!isPasswordValid) return null
+          if (!isPasswordValid) {
+            console.log("Auth: Invalid password")
+            return null
+          }
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
+          console.log("Auth: Successful login for", user.email)
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          }
+        } catch (error) {
+          console.error("Auth: Internal error during authorization", error)
+          return null
         }
       },
     }),
