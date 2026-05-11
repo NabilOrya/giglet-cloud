@@ -13,13 +13,16 @@ export default async function GigDetailPage({
   params,
   searchParams,
 }: {
-  params: { id: string }
+  params: { id?: string; gigId?: string }
   searchParams?: { applied?: string }
 }) {
   const session = await auth()
 
+  const gigId = params.id ?? params.gigId
+  if (!gigId) notFound()
+
   const gig = await prisma.gig.findUnique({
-    where: { id: params.id },
+    where: { id: gigId },
     include: { client: { select: { name: true, email: true } } }
   })
 

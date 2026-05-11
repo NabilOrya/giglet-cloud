@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic"
 export default async function ClientGigApplicationsPage({
   params,
 }: {
-  params: { gigId: string }
+  params: { gigId?: string; id?: string }
 }) {
   const session = await auth()
 
@@ -24,8 +24,11 @@ export default async function ClientGigApplicationsPage({
     redirect("/")
   }
 
+  const gigId = params.gigId ?? params.id
+  if (!gigId) notFound()
+
   const gig = await prisma.gig.findUnique({
-    where: { id: params.gigId },
+    where: { id: gigId },
     include: {
       applications: {
         orderBy: { createdAt: "desc" },
@@ -180,4 +183,3 @@ export default async function ClientGigApplicationsPage({
     </div>
   )
 }
-
