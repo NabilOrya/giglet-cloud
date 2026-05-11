@@ -65,6 +65,9 @@ function SignupForm() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Hidden input to ensure role is always captured */}
+          <input type="hidden" name="role" value={selectedRole} />
+          
           <div className="grid grid-cols-2 gap-4 mb-6">
             <button
               type="button"
