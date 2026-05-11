@@ -31,7 +31,7 @@ export function Sidebar({ session }: { session: any }) {
   const role = session?.user?.role?.toLowerCase()
   
   const menuItems: SidebarItem[] = [
-    { title: "Overview", href: `/dashboard/${role}`, icon: LayoutDashboard },
+    { title: "Overview", href: `/${role}`, icon: LayoutDashboard },
     { title: "Browse Gigs", href: "/gigs", icon: Search },
   ]
 

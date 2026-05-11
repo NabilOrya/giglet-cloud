@@ -91,9 +91,9 @@ export async function login(formData: FormData) {
     }
 
     const dashboardMap = {
-      STUDENT: "/dashboard/student",
-      CLIENT: "/dashboard/client",
-      ADMIN: "/dashboard/admin",
+      STUDENT: "/student",
+      CLIENT: "/client",
+      ADMIN: "/admin",
     }
 
     console.log("Actions: Redirecting", email, "to", dashboardMap[user.role])

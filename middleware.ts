@@ -12,7 +12,7 @@ export default auth((req) => {
 
   const isApiAuthRoute = nextUrl.pathname.startsWith("/api/auth")
   const isPublicRoute = ["/", "/login", "/signup", "/gigs"].includes(nextUrl.pathname) || nextUrl.pathname.startsWith("/gigs/")
-  const isDashboardRoute = nextUrl.pathname.startsWith("/dashboard")
+  const isDashboardRoute = ["/admin", "/client", "/student"].some(path => nextUrl.pathname.startsWith(path))
   const isGigsNewRoute = nextUrl.pathname === "/gigs/new"
 
   if (isApiAuthRoute) return NextResponse.next()
@@ -40,13 +40,13 @@ export default auth((req) => {
     const path = nextUrl.pathname
     
     // Prevent cross-role access
-    if (path.startsWith("/dashboard/student") && userRole !== UserRole.STUDENT) {
+    if (path.startsWith("/student") && userRole !== UserRole.STUDENT) {
       return NextResponse.redirect(new URL(getDefaultRoute(userRole), nextUrl))
     }
-    if (path.startsWith("/dashboard/client") && userRole !== UserRole.CLIENT) {
+    if (path.startsWith("/client") && userRole !== UserRole.CLIENT) {
       return NextResponse.redirect(new URL(getDefaultRoute(userRole), nextUrl))
     }
-    if (path.startsWith("/dashboard/admin") && userRole !== UserRole.ADMIN) {
+    if (path.startsWith("/admin") && userRole !== UserRole.ADMIN) {
       return NextResponse.redirect(new URL(getDefaultRoute(userRole), nextUrl))
     }
 
@@ -62,9 +62,9 @@ export default auth((req) => {
 
 function getDefaultRoute(role?: UserRole): string {
   switch (role) {
-    case UserRole.ADMIN: return "/dashboard/admin"
-    case UserRole.CLIENT: return "/dashboard/client"
-    case UserRole.STUDENT: return "/dashboard/student"
+    case UserRole.ADMIN: return "/admin"
+    case UserRole.CLIENT: return "/client"
+    case UserRole.STUDENT: return "/student"
     default: return "/"
   }
 }
