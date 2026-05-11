@@ -19,6 +19,9 @@ export function Navbar() {
             <Logo />
           </div>
           <div className="hidden md:flex items-center space-x-8">
+            <Link href="/gigs" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              Browse Gigs
+            </Link>
             <Link href="#features" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               Features
             </Link>

@@ -11,10 +11,21 @@ export default auth((req) => {
   const userRole = req.auth?.user?.role as UserRole | undefined
 
   const isApiAuthRoute = nextUrl.pathname.startsWith("/api/auth")
-  const isPublicRoute = ["/", "/login", "/signup"].includes(nextUrl.pathname)
+  const isPublicRoute = ["/", "/login", "/signup", "/gigs"].includes(nextUrl.pathname) || nextUrl.pathname.startsWith("/gigs/")
   const isDashboardRoute = nextUrl.pathname.startsWith("/dashboard")
+  const isGigsNewRoute = nextUrl.pathname === "/gigs/new"
 
   if (isApiAuthRoute) return NextResponse.next()
+
+  if (isGigsNewRoute) {
+    if (!isLoggedIn) {
+      return NextResponse.redirect(new URL("/login?callbackUrl=/gigs/new", nextUrl))
+    }
+    if (userRole !== UserRole.CLIENT) {
+      return NextResponse.redirect(new URL(getDefaultRoute(userRole), nextUrl))
+    }
+    return NextResponse.next()
+  }
 
   if (isDashboardRoute) {
     if (!isLoggedIn) {

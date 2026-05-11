@@ -1,0 +1,17 @@
+{
+  "node": {
+    "408eeabcda56fc6c8432e53e0faf4a06ce9cfc2a01": {
+      "workers": {
+        "app/gigs/new/page": {
+          "moduleId": 18902,
+          "async": false,
+          "exportedName": "createGig",
+          "filename": "src/lib/actions.ts"
+        }
+      },
+      "exportedName": "createGig",
+      "filename": "src/lib/actions.ts"
+    }
+  },
+  "edge": {}
+}

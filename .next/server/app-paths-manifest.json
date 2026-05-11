@@ -7,5 +7,8 @@
   "/_global-error/page": "app/_global-error/page.js",
   "/_not-found/page": "app/_not-found/page.js",
   "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/gigs/[id]/page": "app/gigs/[id]/page.js",
+  "/gigs/new/page": "app/gigs/new/page.js",
+  "/gigs/page": "app/gigs/page.js",
   "/page": "app/page.js"
 }

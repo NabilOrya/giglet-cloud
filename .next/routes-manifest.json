@@ -29,6 +29,14 @@
         "nxtPnextauth": "nxtPnextauth"
       },
       "namedRegex": "^/api/auth/(?<nxtPnextauth>.+?)(?:/)?$"
+    },
+    {
+      "page": "/gigs/[id]",
+      "regex": "^/gigs/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/gigs/(?<nxtPid>[^/]+?)(?:/)?$"
     }
   ],
   "staticRoutes": [
@@ -61,6 +69,18 @@
       "regex": "^/client(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/client(?:/)?$"
+    },
+    {
+      "page": "/gigs",
+      "regex": "^/gigs(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/gigs(?:/)?$"
+    },
+    {
+      "page": "/gigs/new",
+      "regex": "^/gigs/new(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/gigs/new(?:/)?$"
     },
     {
       "page": "/login",

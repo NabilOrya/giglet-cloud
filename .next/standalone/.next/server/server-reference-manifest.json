@@ -1,5 +1,29 @@
 {
   "node": {
+    "40ff31b657e7c549f5203f97ff33dcb0710cd02e08": {
+      "workers": {
+        "app/(auth)/login/page": {
+          "moduleId": 36697,
+          "async": false,
+          "exportedName": "login",
+          "filename": "src/lib/actions.ts"
+        }
+      },
+      "filename": "src/lib/actions.ts",
+      "exportedName": "login"
+    },
+    "408ac10ffc531e27365654b6d88d0dd4e0e6edc9dd": {
+      "workers": {
+        "app/(auth)/signup/page": {
+          "moduleId": 88893,
+          "async": false,
+          "exportedName": "signup",
+          "filename": "src/lib/actions.ts"
+        }
+      },
+      "filename": "src/lib/actions.ts",
+      "exportedName": "signup"
+    },
     "00b5a666f695b533582023bdbceb1b194dff4d26f1": {
       "workers": {
         "app/(dashboard)/admin/page": {
@@ -23,6 +47,18 @@
       },
       "filename": "src/app/(dashboard)/layout.tsx",
       "exportedName": "$$RSC_SERVER_ACTION_0"
+    },
+    "408eeabcda56fc6c8432e53e0faf4a06ce9cfc2a01": {
+      "workers": {
+        "app/gigs/new/page": {
+          "moduleId": 18902,
+          "async": false,
+          "exportedName": "createGig",
+          "filename": "src/lib/actions.ts"
+        }
+      },
+      "filename": "src/lib/actions.ts",
+      "exportedName": "createGig"
     }
   },
   "edge": {},
