@@ -1,11 +1,11 @@
 # Giglet Deployment Guide — AWS EC2 (Standalone Mode)
 
-This document covers deploying Giglet (App Router) to an AWS EC2 instance (private subnet) behind an Application Load Balancer (ALB), using Next.js `output: "standalone"`.
+This document covers deploying Giglet (App Router) directly on an AWS EC2 instance using Next.js `output: "standalone"` (no ALB).
 
 ## Prerequisites
-- EC2 Instance (Ubuntu/Linux) in Private Subnet
+- EC2 Instance (Ubuntu/Linux) with a Public IPv4 (or Elastic IP)
 - RDS PostgreSQL instance accessible from EC2
-- ALB Target Group pointing to EC2 on port `3000`
+- EC2 Security Group allows inbound TCP `3000` from your IP (or 0.0.0.0/0 if you accept public exposure)
 - Node.js 20+ installed on EC2
 - PM2 installed (`npm install -g pm2`)
 - Repository is clean:
@@ -18,12 +18,13 @@ Create a `.env` file in the repo root on EC2:
 ```env
 DATABASE_URL="postgresql://<username>:<password>@<rds-endpoint>:5432/<db-name>?schema=public"
 AUTH_SECRET="<32+ char secret>"
-AUTH_URL="http://<your-alb-dns-name>"
+AUTH_URL="http://44.197.216.71:3000"
 NODE_ENV="production"
+PORT=3000
 ```
 
 Important:
-- `AUTH_URL` must match the ALB URL exactly (no backticks, no extra spaces).
+- `AUTH_URL` must match the URL you use in the browser exactly (no backticks, no extra spaces).
 
 ## Recommended Deployment Flow (Build on EC2)
 From inside the repo directory on EC2:
@@ -47,21 +48,20 @@ cp -r public .next/standalone/
 
 ### Start / Restart with PM2
 ```bash
-pm2 start .next/standalone/server.js --name giglet --update-env --time --interpreter node --env production
+PORT=3000 pm2 start .next/standalone/server.js --name giglet --update-env --time --interpreter node --env production
 pm2 save
 ```
 
 If already running:
 ```bash
-pm2 restart giglet --update-env
+PORT=3000 pm2 restart giglet --update-env
 ```
 
-## ALB & Security Group Verification
-- ALB SG: allow 80/443 from 0.0.0.0/0
-- EC2 SG: allow 3000 ONLY from the ALB SG
-- RDS SG: allow 5432 ONLY from the EC2 SG
+## Security Group Verification
+- EC2 SG inbound: allow TCP `3000`
+- RDS SG inbound: allow TCP `5432` only from the EC2 SG
 
 ## Troubleshooting
-- 502 from ALB: `pm2 list` and `pm2 logs giglet`
-- Auth redirect issues: verify `AUTH_URL` and that the app trusts the proxy (`trustHost: true` in Auth)
+- App not reachable: `pm2 list` and `pm2 logs giglet`
+- Auth redirect issues: verify `AUTH_URL` and `trustHost: true`
 - DB errors: ensure `pnpm exec prisma db push` succeeded and RDS is reachable from EC2

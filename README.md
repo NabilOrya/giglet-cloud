@@ -15,16 +15,12 @@ Giglet empowers three distinct user roles:
 - **ORM**: Prisma
 - **Database**: PostgreSQL (AWS RDS)
 - **Authentication**: Auth.js v5 (NextAuth)
-- **Deployment**: AWS EC2 (Standalone Mode) + ALB
+- **Deployment**: AWS EC2 (Standalone Mode) on port 3000
 - **Process Manager**: PM2
 
-## 🏗 AWS Infrastructure (Existing)
-The application is deployed within a highly secure VPC architecture:
-- **VPC**: `10.0.0.0/16`
-- **Subnets**: Public (ALB) and Private (EC2 & RDS).
-- **Load Balancer**: Application Load Balancer (ALB) handling SSL and traffic distribution.
-- **EC2**: Hosting the Next.js standalone server in a private subnet.
-- **RDS**: Private PostgreSQL instance accessible only from the EC2 security group.
+## 🏗 AWS Infrastructure (Current)
+- **EC2**: Hosts the Next.js standalone server on port `3000`.
+- **RDS**: PostgreSQL database used by Prisma.
 
 ---
 
@@ -36,7 +32,7 @@ The initial phase focused on building a secure, scalable foundation.
 - **Authentication System**:
   - Secure Email/Password signup and login.
   - Password hashing using `bcryptjs` (12 rounds).
-  - Stateless JWT session management (stateless & ALB-compatible).
+  - Stateless JWT session management.
 - **Role-Based Access Control (RBAC)**:
   - Strict middleware-level route protection.
   - Automatic redirection based on user role (`STUDENT`, `CLIENT`, `ADMIN`).
@@ -46,7 +42,7 @@ The initial phase focused on building a secure, scalable foundation.
   - Singleton pattern for Prisma Client to prevent connection exhaustion.
 - **Deployment Optimization**:
   - Configured for Next.js `standalone` mode.
-  - AWS ALB proxy trust configuration (`trustHost`).
+  - Proxy-safe Auth.js configuration (`trustHost: true`).
 
 ### Deployment Summary
 - **Runtime**: Node.js 20 (LTS)

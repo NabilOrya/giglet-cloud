@@ -96,7 +96,7 @@ export function Sidebar({ session }: { session: any }) {
             <div className="flex items-center justify-between px-2">
               <ThemeToggle />
               <button 
-                onClick={() => signOut()}
+                onClick={() => signOut({ callbackUrl: `${window.location.origin}/` })}
                 className="flex items-center space-x-2 px-4 py-2 text-sm font-semibold text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
               >
                 <LogOut className="h-4 w-4" />

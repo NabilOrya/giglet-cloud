@@ -30,7 +30,7 @@ Create the production `.env` file:
 ```bash
 nano .env
 ```
-Paste and update the following values (replace placeholders with your RDS/ALB details):
+Paste and update the following values:
 ```env
 # Database connection to RDS
 DATABASE_URL="postgresql://<USER>:<PASSWORD>@<RDS_ENDPOINT>:5432/giglet?schema=public"
@@ -38,21 +38,21 @@ DATABASE_URL="postgresql://<USER>:<PASSWORD>@<RDS_ENDPOINT>:5432/giglet?schema=p
 # Auth.js Config
 # Generate a secret: openssl rand -base64 32
 AUTH_SECRET="your-generated-secret"
-# The ALB URL (e.g., https://giglet-alb-12345.us-east-1.elb.amazonaws.com)
-AUTH_URL="http://<YOUR_ALB_DNS_OR_DOMAIN>"
+AUTH_URL="http://44.197.216.71:3000"
 
 # Production specific
 NODE_ENV="production"
+PORT=3000
 ```
 
 ## 4. Database Sync
 Ensure your RDS schema is up to date:
 ```bash
 # Generate Prisma Client
-pnpm prisma generate
+pnpm exec prisma generate
 
 # Push schema to RDS (Use this for first-time setup)
-npx prisma db push
+pnpm exec prisma db push
 ```
 
 ## 5. Build for Production
@@ -67,11 +67,11 @@ To ensure the app stays running even after you close the terminal:
 
 ```bash
 # Copy static files to the standalone directory
-cp -r .next/static .next/standalone/.next/static
-cp -r public .next/standalone/public
+cp -r .next/static .next/standalone/.next/
+cp -r public .next/standalone/
 
 # Start the application
-pm2 start .next/standalone/server.js --name "giglet" --env PORT=3000
+PORT=3000 pm2 start .next/standalone/server.js --name "giglet" --update-env --time --interpreter node --env production
 
 # Save PM2 process list to restart on reboot
 pm2 save
@@ -86,6 +86,9 @@ pm2 status
 
 # Check logs
 pm2 logs giglet
+
+# Health endpoint
+curl -i http://127.0.0.1:3000/health
 ```
 
-The app is now running on `localhost:3000` inside your EC2. Your **ALB** should be configured to forward traffic from port 80/443 to this EC2 instance on port 3000.
+The app is now running on port `3000`. Open it in your browser at `http://44.197.216.71:3000/`.
