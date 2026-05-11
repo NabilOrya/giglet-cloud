@@ -27,7 +27,7 @@ export default async function ClientGigApplicationsPage({
   const gigId = params.gigId ?? params.id
   if (!gigId) notFound()
 
-  const gig = await prisma.gig.findUnique({
+  const gig = await prisma.gig.findFirst({
     where: { id: gigId },
     include: {
       applications: {

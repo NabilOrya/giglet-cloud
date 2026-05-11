@@ -21,7 +21,7 @@ export default async function GigDetailPage({
   const gigId = params.id ?? params.gigId
   if (!gigId) notFound()
 
-  const gig = await prisma.gig.findUnique({
+  const gig = await prisma.gig.findFirst({
     where: { id: gigId },
     include: { client: { select: { name: true, email: true } } }
   })
