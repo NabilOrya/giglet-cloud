@@ -1,19 +1,29 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { signup } from "@/lib/actions"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Logo } from "@/components/ui/logo"
 import { AlertCircle, Loader2, GraduationCap, Briefcase } from "lucide-react"
 import { UserRole } from "@prisma/client"
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const initialRole = searchParams.get("role") as UserRole
   
   const [error, setError] = useState<Record<string, string[]> | string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.STUDENT)
+  const [selectedRole, setSelectedRole] = useState<UserRole>(
+    initialRole === UserRole.CLIENT ? UserRole.CLIENT : UserRole.STUDENT
+  )
+
+  useEffect(() => {
+    if (initialRole === UserRole.CLIENT || initialRole === UserRole.STUDENT) {
+      setSelectedRole(initialRole)
+    }
+  }, [initialRole])
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -133,5 +143,13 @@ export default function SignupPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-zinc-950"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>}>
+      <SignupForm />
+    </Suspense>
   )
 }

@@ -1,3 +1,5 @@
+"use server"
+
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { UserRole } from "@prisma/client"
@@ -48,8 +50,8 @@ export async function signup(formData: FormData) {
 
     return { success: true }
   } catch (error) {
-    console.error("Signup error:", error)
-    return { error: { message: "Something went wrong" } }
+    console.error("Signup error details:", error)
+    return { error: { message: `Signup failed: ${error instanceof Error ? error.message : "Unknown error"}` } }
   }
 }
 
