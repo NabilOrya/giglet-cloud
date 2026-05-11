@@ -30,11 +30,9 @@ function LoginForm() {
         setError("Invalid email or password")
       }
       setLoading(false)
-    } else {
-      // After login, we redirect to the specific dashboard based on role
-      // This is a safety measure to ensure the user goes to the right place
+    } else if (result?.success && result.redirectTo) {
       router.refresh()
-      router.push("/") // Middleware will handle the role-based redirect from home
+      router.push(result.redirectTo)
     }
   }
 

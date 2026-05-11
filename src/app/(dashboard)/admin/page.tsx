@@ -1,6 +1,12 @@
 import { Users, Briefcase, AlertCircle, ShieldCheck, Activity, BarChart } from "lucide-react"
+import { prisma } from "@/lib/prisma"
 
-export default function AdminDashboard() {
+export const dynamic = "force-dynamic"
+
+export default async function AdminDashboard() {
+  const userCount = await prisma.user.count()
+  const gigCount = await prisma.gig.count()
+
   return (
     <div className="space-y-10">
       <div>
@@ -10,8 +16,8 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { title: "Total Users", value: "0", icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
-          { title: "Pending Gigs", value: "0", icon: Briefcase, color: "text-purple-500", bg: "bg-purple-500/10" },
+          { title: "Total Users", value: userCount.toString(), icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
+          { title: "Total Gigs", value: gigCount.toString(), icon: Briefcase, color: "text-purple-500", bg: "bg-purple-500/10" },
           { title: "Active Reports", value: "0", icon: AlertCircle, color: "text-red-500", bg: "bg-red-500/10" },
           { title: "System Health", value: "99.9%", icon: Activity, color: "text-green-500", bg: "bg-green-500/10" },
         ].map((stat) => (

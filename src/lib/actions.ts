@@ -77,7 +77,22 @@ export async function login(formData: FormData) {
       password,
       redirect: false,
     })
-    return { success: true }
+    
+    // Fetch the user to determine their role for the redirect
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { role: true }
+    })
+
+    if (!user) return { error: { message: "User not found" } }
+
+    const dashboardMap = {
+      STUDENT: "/dashboard/student",
+      CLIENT: "/dashboard/client",
+      ADMIN: "/dashboard/admin",
+    }
+
+    return { success: true, redirectTo: dashboardMap[user.role] }
   } catch (error) {
     if (error instanceof AuthError) {
       switch (error.type) {
