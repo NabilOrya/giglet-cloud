@@ -24,50 +24,61 @@ export default async function GigDetailPage({
 
   const gigFromPrisma = await prisma.gig.findFirst({
     where: { id: gigId },
-    include: { client: { select: { name: true, email: true } } },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      budget: true,
+      status: true,
+      createdAt: true,
+      clientId: true,
+    },
   })
 
-  type RawGig = {
+  type RawGigRow = {
     id: string
     title: string
     description: string
     budget: number
     status: string
     createdAt: Date
-    clientName: string | null
-    clientEmail: string | null
+    clientId: string
   }
 
-  const rawGig = gigFromPrisma
-    ? null
-    : (
-        await prisma.$queryRaw<Array<RawGig>>`select g.id,
-                g.title,
-                g.description,
-                g.budget,
-                g.status,
-                g."createdAt",
-                u.name as "clientName",
-                u.email as "clientEmail"
-          from "gigs" g
-          join "users" u on u.id = g."clientId"
-          where g.id::text = ${gigId}
-          limit 1`
-      )[0] ?? null
-
-  const gig =
+  const rawGig =
     gigFromPrisma ??
-    (rawGig
-      ? {
-          id: rawGig.id,
-          title: rawGig.title,
-          description: rawGig.description,
-          budget: rawGig.budget,
-          status: rawGig.status,
-          createdAt: rawGig.createdAt,
-          client: { name: rawGig.clientName, email: rawGig.clientEmail },
-        }
-      : null)
+    ((
+      await prisma.$queryRaw<Array<RawGigRow>>`select id,
+              title,
+              description,
+              budget,
+              status,
+              "createdAt",
+              "clientId"
+        from "gigs"
+        where id::text = ${gigId}
+        limit 1`
+    )[0] ?? null)
+
+  if (!rawGig) notFound()
+
+  const client = await prisma.user.findFirst({
+    where: { id: rawGig.clientId },
+    select: { name: true, email: true },
+  })
+
+  const gig = {
+    id: rawGig.id,
+    title: rawGig.title,
+    description: rawGig.description,
+    budget: rawGig.budget,
+    status: rawGig.status,
+    createdAt: rawGig.createdAt,
+    client: {
+      name: client?.name ?? "Unknown Client",
+      email: client?.email ?? "",
+    },
+  }
 
   if (!gig) notFound()
 
