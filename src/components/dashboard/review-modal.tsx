@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { reviewSubmission } from "@/lib/actions"
+import { reviewSubmission, getFileDownloadUrl } from "@/lib/actions"
 import { X, CheckCircle2, RotateCcw, FileText, ExternalLink, Loader2 } from "lucide-react"
 
 interface ReviewModalProps {
@@ -10,6 +10,7 @@ interface ReviewModalProps {
     notes: string | null
     fileUrl: string | null
     fileName: string | null
+    fileKey: string | null
     status: string
   }
   studentName: string
@@ -21,6 +22,17 @@ export function ReviewModal({ submission, studentName, onClose, onSuccess }: Rev
   const [loading, setLoading] = useState(false)
   const [feedback, setFeedback] = useState("")
   const [error, setError] = useState<string | null>(null)
+
+  const handleDownload = async () => {
+    if (!submission.fileKey) return
+    
+    try {
+      const url = await getFileDownloadUrl(submission.fileKey)
+      window.open(url, "_blank")
+    } catch (err) {
+      setError("Failed to generate access link")
+    }
+  }
 
   const handleReview = async (action: "ACCEPT" | "REDO") => {
     setLoading(true)
@@ -76,22 +88,20 @@ export function ReviewModal({ submission, studentName, onClose, onSuccess }: Rev
               </div>
             )}
 
-            {submission.fileUrl ? (
+            {submission.fileKey ? (
               <div>
                 <p className="text-sm font-medium text-foreground mb-2">Attached File:</p>
-                <a 
-                  href={submission.fileUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-4 bg-card border border-border rounded-xl hover:border-primary/50 transition-all group"
+                <button 
+                  onClick={handleDownload}
+                  className="w-full flex items-center gap-3 p-4 bg-card border border-border rounded-xl hover:border-primary/50 transition-all group text-left"
                 >
                   <FileText className="h-6 w-6 text-primary" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold truncate">{submission.fileName || "Download Attachment"}</p>
-                    <p className="text-xs text-muted-foreground uppercase tracking-tight">Click to preview in new tab</p>
+                    <p className="text-xs text-muted-foreground uppercase tracking-tight">Click to preview securely</p>
                   </div>
                   <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
-                </a>
+                </button>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground italic">No file attached</p>

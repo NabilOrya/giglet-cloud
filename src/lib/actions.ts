@@ -8,7 +8,7 @@ import { z } from "zod"
 import { signIn, auth } from "@/lib/auth"
 import { AuthError } from "next-auth"
 import { redirect } from "next/navigation"
-import { getUploadUrl, getPublicUrl } from "./s3"
+import { getUploadUrl, getPublicUrl, getDownloadUrl } from "./s3"
 
 const SubmissionSchema = z.object({
   applicationId: z.string().uuid(),
@@ -16,6 +16,17 @@ const SubmissionSchema = z.object({
   fileName: z.string().optional(),
   fileKey: z.string().optional(),
 })
+
+export async function getFileDownloadUrl(fileKey: string) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized")
+  }
+
+  // Optional: Add more strict checks here to ensure the user has access to this specific file
+  // For now, we allow any logged-in user to generate a download URL if they have the key
+  return await getDownloadUrl(fileKey)
+}
 
 export async function getSubmissionUploadUrl(fileName: string, contentType: string) {
   const session = await auth()

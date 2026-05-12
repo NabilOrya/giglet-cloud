@@ -10,6 +10,7 @@ interface ReviewButtonProps {
     notes: string | null
     fileUrl: string | null
     fileName: string | null
+    fileKey: string | null
     status: string
   }
   studentName: string
