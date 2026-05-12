@@ -22,7 +22,7 @@ export default async function GigDetailPage({
   const gigId = params.id ?? params.gigId
   if (!gigId) notFound()
 
-  const gigFromPrisma = await prisma.gig.findFirst({
+  let gigRecord = await prisma.gig.findFirst({
     where: { id: gigId },
     select: {
       id: true,
@@ -35,52 +35,39 @@ export default async function GigDetailPage({
     },
   })
 
-  type RawGigRow = {
-    id: string
-    title: string
-    description: string
-    budget: number
-    status: string
-    createdAt: Date
-    clientId: string
+  if (!gigRecord) {
+    const recentOpen = await prisma.gig.findMany({
+      where: { status: "OPEN" },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        budget: true,
+        status: true,
+        createdAt: true,
+        clientId: true,
+      },
+    })
+
+    gigRecord = recentOpen.find((g) => g.id === gigId) ?? null
   }
 
-  const rawGig =
-    gigFromPrisma ??
-    ((
-      await prisma.$queryRaw<Array<RawGigRow>>`select id,
-              title,
-              description,
-              budget,
-              status,
-              "createdAt",
-              "clientId"
-        from "gigs"
-        where id::text = ${gigId}
-        limit 1`
-    )[0] ?? null)
-
-  if (!rawGig) notFound()
+  if (!gigRecord) notFound()
 
   const client = await prisma.user.findFirst({
-    where: { id: rawGig.clientId },
+    where: { id: gigRecord.clientId },
     select: { name: true, email: true },
   })
 
   const gig = {
-    id: rawGig.id,
-    title: rawGig.title,
-    description: rawGig.description,
-    budget: rawGig.budget,
-    status: rawGig.status,
-    createdAt: rawGig.createdAt,
+    ...gigRecord,
     client: {
       name: client?.name ?? "Unknown Client",
       email: client?.email ?? "",
     },
   }
-
-  if (!gig) notFound()
 
   const studentApplication =
     session?.user?.role === "STUDENT"
