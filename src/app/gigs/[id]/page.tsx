@@ -20,21 +20,56 @@ export default async function GigDetailPage({
   const session = await auth()
 
   const gigId = params.id ?? params.gigId
-  if (!gigId) {
-    console.log("[GIG DETAIL] Missing gig id param", params)
-    notFound()
-  }
+  if (!gigId) notFound()
 
-  const gig = await prisma.gig.findFirst({
+  const gigFromPrisma = await prisma.gig.findFirst({
     where: { id: gigId },
-    include: { client: { select: { name: true, email: true } } }
+    include: { client: { select: { name: true, email: true } } },
   })
 
-  if (!gig) {
-    const exists = await prisma.gig.count({ where: { id: gigId } })
-    console.log("[GIG DETAIL] Gig not found", { gigId, exists })
-    notFound()
+  type RawGig = {
+    id: string
+    title: string
+    description: string
+    budget: number
+    status: string
+    createdAt: Date
+    clientName: string | null
+    clientEmail: string | null
   }
+
+  const rawGig = gigFromPrisma
+    ? null
+    : (
+        await prisma.$queryRaw<Array<RawGig>>`select g.id,
+                g.title,
+                g.description,
+                g.budget,
+                g.status,
+                g."createdAt",
+                u.name as "clientName",
+                u.email as "clientEmail"
+          from "gigs" g
+          join "users" u on u.id = g."clientId"
+          where g.id::text = ${gigId}
+          limit 1`
+      )[0] ?? null
+
+  const gig =
+    gigFromPrisma ??
+    (rawGig
+      ? {
+          id: rawGig.id,
+          title: rawGig.title,
+          description: rawGig.description,
+          budget: rawGig.budget,
+          status: rawGig.status,
+          createdAt: rawGig.createdAt,
+          client: { name: rawGig.clientName, email: rawGig.clientEmail },
+        }
+      : null)
+
+  if (!gig) notFound()
 
   const studentApplication =
     session?.user?.role === "STUDENT"
