@@ -67,9 +67,24 @@ model Application {
   studentId String
   student   User     @relation("StudentApplications", fields: [studentId], references: [id], onDelete: Cascade)
   status    ApplicationStatus @default(PENDING)
+  submission Submission?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([gigId, studentId])
   @@map("applications")
+}
+
+model Submission {
+  id            String      @id @default(uuid())
+  applicationId String      @unique
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  notes         String?     @db.Text
+  fileUrl       String?     // S3 URL
+  fileName      String?     // Original file name
+  fileKey       String?     // S3 Key for deletion
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@map("submissions")
 }

@@ -8,6 +8,73 @@ import { z } from "zod"
 import { signIn, auth } from "@/lib/auth"
 import { AuthError } from "next-auth"
 import { redirect } from "next/navigation"
+import { getUploadUrl, getPublicUrl } from "./s3"
+
+const SubmissionSchema = z.object({
+  applicationId: z.string().uuid(),
+  notes: z.string().optional(),
+  fileName: z.string().optional(),
+  fileKey: z.string().optional(),
+})
+
+export async function getSubmissionUploadUrl(fileName: string, contentType: string) {
+  const session = await auth()
+  if (!session?.user?.id || session.user.role !== UserRole.STUDENT) {
+    throw new Error("Unauthorized")
+  }
+
+  const fileExtension = fileName.split(".").pop()
+  const key = `submissions/${session.user.id}/${Date.now()}.${fileExtension}`
+  const url = await getUploadUrl(key, contentType)
+
+  return { url, key }
+}
+
+export async function createSubmission(data: z.infer<typeof SubmissionSchema>) {
+  const session = await auth()
+  if (!session?.user?.id || session.user.role !== UserRole.STUDENT) {
+    return { error: "Unauthorized" }
+  }
+
+  const validated = SubmissionSchema.safeParse(data)
+  if (!validated.success) {
+    return { error: "Invalid data" }
+  }
+
+  const { applicationId, notes, fileName, fileKey } = validated.data
+
+  const application = await prisma.application.findUnique({
+    where: { id: applicationId },
+    select: { studentId: true, status: true, gigId: true }
+  })
+
+  if (!application || application.studentId !== session.user.id || application.status !== "ACCEPTED") {
+    return { error: "Invalid application" }
+  }
+
+  try {
+    await prisma.$transaction([
+      prisma.submission.create({
+        data: {
+          applicationId,
+          notes,
+          fileName,
+          fileKey,
+          fileUrl: fileKey ? getPublicUrl(fileKey) : null
+        }
+      }),
+      prisma.gig.update({
+        where: { id: application.gigId },
+        data: { status: GigStatus.COMPLETED }
+      })
+    ])
+
+    return { success: true }
+  } catch (error) {
+    console.error("Submission error:", error)
+    return { error: "Failed to create submission" }
+  }
+}
 
 const SignupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import Link from "next/link"
 import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
+import { AcceptedGigsList } from "@/components/dashboard/accepted-gigs-list"
 
 export const dynamic = "force-dynamic"
 
@@ -24,11 +25,23 @@ export default async function StudentDashboard() {
     where: { status: "OPEN" }
   })
 
-  const [totalApplications, pendingApplications, acceptedApplications] = await Promise.all([
+  const [totalApplications, pendingApplications, acceptedApplicationsCount] = await Promise.all([
     prisma.application.count({ where: { studentId: session.user.id } }),
     prisma.application.count({ where: { studentId: session.user.id, status: "PENDING" } }),
     prisma.application.count({ where: { studentId: session.user.id, status: "ACCEPTED" } }),
   ])
+
+  const acceptedGigs = await prisma.application.findMany({
+    where: { 
+      studentId: session.user.id, 
+      status: "ACCEPTED" 
+    },
+    include: {
+      gig: true,
+      submission: true
+    },
+    orderBy: { updatedAt: "desc" }
+  })
 
   const latestGigs = await prisma.gig.findMany({
     where: { status: "OPEN" },
@@ -58,7 +71,7 @@ export default async function StudentDashboard() {
           { title: "Available Gigs", value: totalOpenGigs.toString(), icon: Zap, color: "text-blue-500", bg: "bg-blue-500/10" },
           { title: "My Applications", value: totalApplications.toString(), icon: Clock, color: "text-purple-500", bg: "bg-purple-500/10" },
           { title: "Pending", value: pendingApplications.toString(), icon: Wallet, color: "text-green-500", bg: "bg-green-500/10" },
-          { title: "Accepted", value: acceptedApplications.toString(), icon: TrendingUp, color: "text-orange-500", bg: "bg-orange-500/10" },
+          { title: "Accepted", value: acceptedApplicationsCount.toString(), icon: TrendingUp, color: "text-orange-500", bg: "bg-orange-500/10" },
         ].map((stat) => (
           <div key={stat.title} className="card-gradient p-6 rounded-3xl border border-border/50">
             <div className={`${stat.bg} ${stat.color} h-10 w-10 rounded-xl flex items-center justify-center mb-4`}>
@@ -69,6 +82,9 @@ export default async function StudentDashboard() {
           </div>
         ))}
       </div>
+
+      {/* Accepted Gigs Section */}
+      <AcceptedGigsList gigs={acceptedGigs} />
 
       <div className="space-y-6">
         <div className="flex items-center justify-between">
