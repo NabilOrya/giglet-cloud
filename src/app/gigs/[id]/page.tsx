@@ -10,14 +10,13 @@ import { applyForGig } from "@/lib/actions"
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-export default async function GigDetailPage({
-  params,
-  searchParams,
-}: {
-  params: { id?: string; gigId?: string }
-  searchParams?: { applied?: string }
+export default async function GigDetailPage(props: {
+  params: Promise<{ id?: string; gigId?: string }>
+  searchParams: Promise<{ applied?: string }>
 }) {
   const session = await auth()
+  const params = await props.params
+  const searchParams = await props.searchParams
 
   const gigId = params.id ?? params.gigId
   if (!gigId) notFound()

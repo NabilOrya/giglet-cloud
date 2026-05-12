@@ -8,12 +8,11 @@ import { ArrowLeft, Briefcase, Calendar, User as UserIcon, Mail, CheckCircle2, X
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-export default async function ClientGigApplicationsPage({
-  params,
-}: {
-  params: { gigId?: string; id?: string }
+export default async function ClientGigApplicationsPage(props: {
+  params: Promise<{ gigId?: string; id?: string }>
 }) {
   const session = await auth()
+  const params = await props.params
 
   if (!session?.user?.id) {
     redirect("/login")
