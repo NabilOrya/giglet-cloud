@@ -25,11 +25,27 @@ export default async function StudentDashboard() {
     where: { status: "OPEN" }
   })
 
-  const [totalApplications, pendingApplications, acceptedApplicationsCount] = await Promise.all([
+  const [totalApplications, pendingApplications, acceptedApplicationsCount, totalEarningsResult] = await Promise.all([
     prisma.application.count({ where: { studentId: session.user.id } }),
     prisma.application.count({ where: { studentId: session.user.id, status: "PENDING" } }),
     prisma.application.count({ where: { studentId: session.user.id, status: "ACCEPTED" } }),
+    prisma.gig.aggregate({
+      where: {
+        applications: {
+          some: {
+            studentId: session.user.id,
+            submissions: {
+              some: { status: "ACCEPTED" }
+            }
+          }
+        },
+        status: "COMPLETED"
+      },
+      _sum: { budget: true }
+    })
   ])
+
+  const totalEarnings = totalEarningsResult._sum.budget || 0
 
   const acceptedGigs = await prisma.application.findMany({
     where: { 
@@ -38,7 +54,10 @@ export default async function StudentDashboard() {
     },
     include: {
       gig: true,
-      submission: true
+      submissions: {
+        orderBy: { createdAt: "desc" },
+        take: 1
+      }
     },
     orderBy: { updatedAt: "desc" }
   })
@@ -70,8 +89,8 @@ export default async function StudentDashboard() {
         {[
           { title: "Available Gigs", value: totalOpenGigs.toString(), icon: Zap, color: "text-blue-500", bg: "bg-blue-500/10" },
           { title: "My Applications", value: totalApplications.toString(), icon: Clock, color: "text-purple-500", bg: "bg-purple-500/10" },
-          { title: "Pending", value: pendingApplications.toString(), icon: Wallet, color: "text-green-500", bg: "bg-green-500/10" },
-          { title: "Accepted", value: acceptedApplicationsCount.toString(), icon: TrendingUp, color: "text-orange-500", bg: "bg-orange-500/10" },
+          { title: "Total Earnings", value: `$${totalEarnings.toLocaleString()}`, icon: Wallet, color: "text-green-500", bg: "bg-green-500/10" },
+          { title: "Accepted Gigs", value: acceptedApplicationsCount.toString(), icon: TrendingUp, color: "text-orange-500", bg: "bg-orange-500/10" },
         ].map((stat) => (
           <div key={stat.title} className="card-gradient p-6 rounded-3xl border border-border/50">
             <div className={`${stat.bg} ${stat.color} h-10 w-10 rounded-xl flex items-center justify-center mb-4`}>

@@ -9,7 +9,17 @@ export default async function AdminDashboard() {
   const userCount = await prisma.user.count()
   const gigCount = await prisma.gig.count()
   
-  console.log(`[ADMIN AUDIT] Time: ${new Date().toISOString()} | Users: ${userCount} | Gigs: ${gigCount}`)
+  const totalRevenueResult = await prisma.gig.aggregate({
+    where: { status: "COMPLETED" },
+    _sum: { budget: true }
+  })
+  const totalRevenue = totalRevenueResult._sum.budget || 0
+
+  const activeGigs = await prisma.gig.count({
+    where: { status: "IN_PROGRESS" }
+  })
+
+  console.log(`[ADMIN AUDIT] Time: ${new Date().toISOString()} | Users: ${userCount} | Gigs: ${gigCount} | Revenue: ${totalRevenue}`)
 
   const stats = [
     { 
@@ -29,18 +39,18 @@ export default async function AdminDashboard() {
       href: "/admin/gigs" 
     },
     { 
-      title: "Active Reports", 
-      value: "0", 
-      icon: AlertCircle, 
-      color: "text-red-500", 
-      bg: "bg-red-500/10" 
-    },
-    { 
-      title: "System Health", 
-      value: "99.9%", 
-      icon: Activity, 
+      title: "Total Volume", 
+      value: `$${totalRevenue.toLocaleString()}`, 
+      icon: BarChart, 
       color: "text-green-500", 
       bg: "bg-green-500/10" 
+    },
+    { 
+      title: "Active Gigs", 
+      value: activeGigs.toString(), 
+      icon: Activity, 
+      color: "text-orange-500", 
+      bg: "bg-orange-500/10" 
     },
   ]
 

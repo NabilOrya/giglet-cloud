@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma"
 import { redirect, notFound } from "next/navigation"
 import Link from "next/link"
 import { acceptApplication, rejectApplication } from "@/lib/actions"
-import { ArrowLeft, Briefcase, Calendar, User as UserIcon, Mail, CheckCircle2, XCircle } from "lucide-react"
+import { ArrowLeft, Briefcase, Calendar, User as UserIcon, Mail, CheckCircle2, XCircle, FileSearch, RotateCcw } from "lucide-react"
+import { ReviewButton } from "@/components/dashboard/review-button"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -34,6 +35,10 @@ export default async function ClientGigApplicationsPage(props: {
         orderBy: { createdAt: "desc" },
         include: {
           student: { select: { id: true, name: true, email: true } },
+          submissions: {
+            orderBy: { createdAt: "desc" },
+            take: 1
+          }
         },
       },
     },
@@ -88,6 +93,8 @@ export default async function ClientGigApplicationsPage(props: {
             const isPending = application.status === "PENDING"
             const acceptDisabled =
               acceptedApplicationId !== null && acceptedApplicationId !== application.id
+            
+            const latestSubmission = application.submissions[0]
 
             return (
               <div
@@ -117,7 +124,7 @@ export default async function ClientGigApplicationsPage(props: {
                     </div>
                   </div>
 
-                  <div>
+                  <div className="flex items-center gap-2">
                     <span
                       className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                         isAccepted
@@ -130,44 +137,68 @@ export default async function ClientGigApplicationsPage(props: {
                       {isAccepted ? <CheckCircle2 className="h-3 w-3" /> : isRejected ? <XCircle className="h-3 w-3" /> : null}
                       {application.status}
                     </span>
+
+                    {latestSubmission && (
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        latestSubmission.status === "PENDING" 
+                          ? "bg-orange-500/10 text-orange-600 animate-pulse" 
+                          : latestSubmission.status === "ACCEPTED"
+                            ? "bg-green-500/10 text-green-600"
+                            : "bg-orange-500/10 text-orange-600"
+                      }`}>
+                        {latestSubmission.status === "PENDING" && <FileSearch className="h-3 w-3" />}
+                        {latestSubmission.status === "ACCEPTED" && <CheckCircle2 className="h-3 w-3" />}
+                        {latestSubmission.status === "REDO" && <RotateCcw className="h-3 w-3" />}
+                        Submission: {latestSubmission.status}
+                      </span>
+                    )}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <form action={acceptApplication}>
-                    <input type="hidden" name="applicationId" value={application.id} />
-                    <button
-                      disabled={isAccepted || isRejected || acceptDisabled}
-                      className={`p-3 rounded-xl transition-all flex items-center gap-2 text-sm font-bold ${
-                        isAccepted
-                          ? "bg-green-500/10 text-green-700 cursor-not-allowed"
-                          : acceptDisabled || isRejected
-                            ? "bg-muted text-muted-foreground cursor-not-allowed"
-                            : "bg-primary text-primary-foreground hover:opacity-90 shadow-lg shadow-primary/20"
-                      }`}
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                      Accept
-                    </button>
-                  </form>
+                  {isAccepted && latestSubmission && latestSubmission.status === "PENDING" ? (
+                    <ReviewButton 
+                      submission={latestSubmission} 
+                      studentName={application.student.name || "Student"} 
+                    />
+                  ) : (
+                    <>
+                      <form action={acceptApplication}>
+                        <input type="hidden" name="applicationId" value={application.id} />
+                        <button
+                          disabled={isAccepted || isRejected || acceptDisabled}
+                          className={`p-3 rounded-xl transition-all flex items-center gap-2 text-sm font-bold ${
+                            isAccepted
+                              ? "bg-green-500/10 text-green-700 cursor-not-allowed"
+                              : acceptDisabled || isRejected
+                                ? "bg-muted text-muted-foreground cursor-not-allowed"
+                                : "bg-primary text-primary-foreground hover:opacity-90 shadow-lg shadow-primary/20"
+                          }`}
+                        >
+                          <CheckCircle2 className="h-4 w-4" />
+                          Accept
+                        </button>
+                      </form>
 
-                  <form action={rejectApplication}>
-                    <input type="hidden" name="applicationId" value={application.id} />
-                    <input type="hidden" name="gigId" value={gig.id} />
-                    <button
-                      disabled={isRejected || isAccepted}
-                      className={`p-3 rounded-xl transition-all flex items-center gap-2 text-sm font-bold ${
-                        isRejected
-                          ? "bg-red-500/10 text-red-700 cursor-not-allowed"
-                          : isAccepted
-                            ? "bg-muted text-muted-foreground cursor-not-allowed"
-                            : "bg-muted/50 hover:bg-red-500/10 hover:text-red-600"
-                      }`}
-                    >
-                      <XCircle className="h-4 w-4" />
-                      Reject
-                    </button>
-                  </form>
+                      <form action={rejectApplication}>
+                        <input type="hidden" name="applicationId" value={application.id} />
+                        <input type="hidden" name="gigId" value={gig.id} />
+                        <button
+                          disabled={isRejected || isAccepted}
+                          className={`p-3 rounded-xl transition-all flex items-center gap-2 text-sm font-bold ${
+                            isRejected
+                              ? "bg-red-500/10 text-red-700 cursor-not-allowed"
+                              : isAccepted
+                                ? "bg-muted text-muted-foreground cursor-not-allowed"
+                                : "bg-muted/50 hover:bg-red-500/10 hover:text-red-600"
+                          }`}
+                        >
+                          <XCircle className="h-4 w-4" />
+                          Reject
+                        </button>
+                      </form>
+                    </>
+                  )}
 
                   {isPending && acceptedApplicationId !== null && acceptDisabled && (
                     <span className="text-xs font-bold text-muted-foreground">

@@ -53,26 +53,74 @@ export async function createSubmission(data: z.infer<typeof SubmissionSchema>) {
   }
 
   try {
-    await prisma.$transaction([
-      prisma.submission.create({
-        data: {
-          applicationId,
-          notes,
-          fileName,
-          fileKey,
-          fileUrl: fileKey ? getPublicUrl(fileKey) : null
-        }
-      }),
-      prisma.gig.update({
-        where: { id: application.gigId },
-        data: { status: GigStatus.COMPLETED }
-      })
-    ])
+    await prisma.submission.create({
+      data: {
+        applicationId,
+        notes,
+        fileName,
+        fileKey,
+        fileUrl: fileKey ? getPublicUrl(fileKey) : null,
+        status: "PENDING"
+      }
+    })
 
     return { success: true }
   } catch (error) {
     console.error("Submission error:", error)
     return { error: "Failed to create submission" }
+  }
+}
+
+export async function reviewSubmission(formData: FormData) {
+  const session = await auth()
+  if (!session?.user?.id || session.user.role !== UserRole.CLIENT) {
+    return { error: "Unauthorized" }
+  }
+
+  const submissionId = formData.get("submissionId") as string
+  const action = formData.get("action") as "ACCEPT" | "REDO"
+  const feedback = formData.get("feedback") as string
+
+  if (!submissionId || !action) {
+    return { error: "Missing data" }
+  }
+
+  const submission = await prisma.submission.findUnique({
+    where: { id: submissionId },
+    include: {
+      application: {
+        include: { gig: true }
+      }
+    }
+  })
+
+  if (!submission || submission.application.gig.clientId !== session.user.id) {
+    return { error: "Unauthorized" }
+  }
+
+  try {
+    if (action === "ACCEPT") {
+      await prisma.$transaction([
+        prisma.submission.update({
+          where: { id: submissionId },
+          data: { status: "ACCEPTED", feedback }
+        }),
+        prisma.gig.update({
+          where: { id: submission.application.gigId },
+          data: { status: GigStatus.COMPLETED }
+        })
+      ])
+    } else {
+      await prisma.submission.update({
+        where: { id: submissionId },
+        data: { status: "REDO", feedback }
+      })
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error("Review error:", error)
+    return { error: "Failed to process review" }
   }
 }
 

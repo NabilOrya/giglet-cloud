@@ -29,6 +29,12 @@ enum ApplicationStatus {
   REJECTED
 }
 
+enum SubmissionStatus {
+  PENDING
+  ACCEPTED
+  REDO
+}
+
 model User {
   id            String    @id @default(uuid())
   name          String?
@@ -67,7 +73,7 @@ model Application {
   studentId String
   student   User     @relation("StudentApplications", fields: [studentId], references: [id], onDelete: Cascade)
   status    ApplicationStatus @default(PENDING)
-  submission Submission?
+  submissions Submission[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -77,12 +83,14 @@ model Application {
 
 model Submission {
   id            String      @id @default(uuid())
-  applicationId String      @unique
+  applicationId String
   application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   notes         String?     @db.Text
   fileUrl       String?     // S3 URL
   fileName      String?     // Original file name
   fileKey       String?     // S3 Key for deletion
+  status        SubmissionStatus @default(PENDING)
+  feedback      String?     @db.Text
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 

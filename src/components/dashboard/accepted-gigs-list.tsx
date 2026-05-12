@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { SubmitWorkModal } from "./submit-work-modal"
-import { Briefcase, CheckCircle2 } from "lucide-react"
+import { Briefcase, CheckCircle2, RotateCcw, MessageSquare, Clock } from "lucide-react"
 
 interface AcceptedGig {
   id: string
@@ -12,7 +12,7 @@ interface AcceptedGig {
     description: string
     budget: number
   }
-  submission: any | null
+  submissions: any[]
 }
 
 export function AcceptedGigsList({ gigs }: { gigs: AcceptedGig[] }) {
@@ -29,50 +29,87 @@ export function AcceptedGigsList({ gigs }: { gigs: AcceptedGig[] }) {
 
       {gigs.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {gigs.map((app) => (
-            <div 
-              key={app.id} 
-              className="card-gradient p-6 rounded-3xl border border-border/50 flex flex-col h-full"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <span className="bg-green-500/10 text-green-600 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
-                  ${app.gig.budget}
-                </span>
-                {app.submission ? (
-                  <span className="bg-blue-500/10 text-blue-600 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3" />
-                    Submitted
+          {gigs.map((app) => {
+            const latestSubmission = app.submissions[0]
+            const needsAction = !latestSubmission || latestSubmission.status === "REDO"
+            const isPendingReview = latestSubmission?.status === "PENDING"
+            
+            return (
+              <div 
+                key={app.id} 
+                className="card-gradient p-6 rounded-3xl border border-border/50 flex flex-col h-full"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <span className="bg-green-500/10 text-green-600 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+                    ${app.gig.budget}
                   </span>
+                  {latestSubmission ? (
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider flex items-center gap-1 ${
+                      latestSubmission.status === "ACCEPTED" 
+                        ? "bg-green-500/10 text-green-600" 
+                        : latestSubmission.status === "REDO"
+                          ? "bg-orange-500/10 text-orange-600"
+                          : "bg-blue-500/10 text-blue-600"
+                    }`}>
+                      {latestSubmission.status === "ACCEPTED" && <CheckCircle2 className="h-3 w-3" />}
+                      {latestSubmission.status === "REDO" && <RotateCcw className="h-3 w-3" />}
+                      {latestSubmission.status === "PENDING" && <Clock className="h-3 w-3" />}
+                      {latestSubmission.status === "PENDING" ? "Under Review" : latestSubmission.status}
+                    </span>
+                  ) : (
+                    <span className="bg-orange-500/10 text-orange-500 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+                      In Progress
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-lg font-bold mb-2 line-clamp-1">{app.gig.title}</h3>
+                <p className="text-muted-foreground text-sm line-clamp-2 mb-4 flex-grow">
+                  {app.gig.description}
+                </p>
+
+                {latestSubmission?.feedback && (
+                  <div className="mb-6 p-4 bg-orange-500/5 border border-orange-500/10 rounded-2xl">
+                    <div className="flex items-center gap-2 mb-2 text-orange-600">
+                      <MessageSquare className="h-3.5 w-3.5" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Client Feedback</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-3 italic">"{latestSubmission.feedback}"</p>
+                  </div>
+                )}
+                
+                {needsAction ? (
+                  <button 
+                    onClick={() => setSelectedApplication({ id: app.id, title: app.gig.title })}
+                    className="btn-primary w-full py-3 text-sm font-bold flex items-center justify-center gap-2"
+                  >
+                    <Briefcase className="h-4 w-4" />
+                    {latestSubmission?.status === "REDO" ? "Re-submit Work" : "Submit Work"}
+                  </button>
                 ) : (
-                  <span className="bg-orange-500/10 text-orange-500 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
-                    In Progress
-                  </span>
+                  <button 
+                    disabled
+                    className={`w-full py-3 text-sm font-bold flex items-center justify-center gap-2 rounded-2xl ${
+                      latestSubmission.status === "ACCEPTED" 
+                        ? "bg-green-500/10 text-green-600" 
+                        : "bg-muted text-muted-foreground"
+                    } cursor-not-allowed`}
+                  >
+                    {latestSubmission.status === "ACCEPTED" ? (
+                      <>
+                        <CheckCircle2 className="h-4 w-4" />
+                        Project Completed
+                      </>
+                    ) : (
+                      <>
+                        <Clock className="h-4 w-4" />
+                        Awaiting Review
+                      </>
+                    )}
+                  </button>
                 )}
               </div>
-              <h3 className="text-lg font-bold mb-2 line-clamp-1">{app.gig.title}</h3>
-              <p className="text-muted-foreground text-sm line-clamp-2 mb-6 flex-grow">
-                {app.gig.description}
-              </p>
-              
-              {!app.submission ? (
-                <button 
-                  onClick={() => setSelectedApplication({ id: app.id, title: app.gig.title })}
-                  className="btn-primary w-full py-3 text-sm font-bold flex items-center justify-center gap-2"
-                >
-                  <Briefcase className="h-4 w-4" />
-                  Submit Work
-                </button>
-              ) : (
-                <button 
-                  disabled
-                  className="w-full py-3 text-sm font-bold flex items-center justify-center gap-2 rounded-2xl bg-muted text-muted-foreground cursor-not-allowed"
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  Submission Sent
-                </button>
-              )}
-            </div>
-          ))}
+            )
+          })}
         </div>
       ) : (
         <div className="card-gradient p-10 rounded-3xl text-center border-dashed border-2 bg-muted/20">

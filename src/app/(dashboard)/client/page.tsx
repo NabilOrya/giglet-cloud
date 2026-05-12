@@ -23,6 +23,32 @@ export default async function ClientDashboard() {
     where: { clientId: session.user.id },
   })
 
+  const activeProjects = await prisma.gig.count({
+    where: { 
+      clientId: session.user.id,
+      status: "IN_PROGRESS"
+    },
+  })
+
+  const totalSpentResult = await prisma.gig.aggregate({
+    where: {
+      clientId: session.user.id,
+      status: "COMPLETED"
+    },
+    _sum: {
+      budget: true
+    }
+  })
+
+  const totalSpent = totalSpentResult._sum.budget || 0
+
+  const hiredTalent = await prisma.application.count({
+    where: {
+      gig: { clientId: session.user.id },
+      status: "ACCEPTED"
+    }
+  })
+
   const [{ exists: hasApplicationsTable } = { exists: false }] = await prisma.$queryRaw<
     Array<{ exists: boolean }>
   >`SELECT to_regclass('public.applications') IS NOT NULL AS "exists"`
@@ -74,9 +100,9 @@ export default async function ClientDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { title: "Total Gigs Posted", value: totalGigsPosted.toString(), icon: Briefcase, color: "text-purple-500", bg: "bg-purple-500/10" },
-          { title: "Active Projects", value: "0", icon: BarChart3, color: "text-blue-500", bg: "bg-blue-500/10" },
-          { title: "Total Spent", value: "$0.00", icon: BarChart3, color: "text-green-500", bg: "bg-green-500/10" },
-          { title: "Hired Talent", value: "0", icon: Users, color: "text-orange-500", bg: "bg-orange-500/10" },
+          { title: "Active Projects", value: activeProjects.toString(), icon: BarChart3, color: "text-blue-500", bg: "bg-blue-500/10" },
+          { title: "Total Spent", value: `$${totalSpent.toLocaleString()}`, icon: BarChart3, color: "text-green-500", bg: "bg-green-500/10" },
+          { title: "Hired Talent", value: hiredTalent.toString(), icon: Users, color: "text-orange-500", bg: "bg-orange-500/10" },
         ].map((stat) => (
           <div key={stat.title} className="card-gradient p-6 rounded-3xl border border-border/50">
             <div className={`${stat.bg} ${stat.color} h-10 w-10 rounded-xl flex items-center justify-center mb-4`}>
